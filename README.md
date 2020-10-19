@@ -3,7 +3,7 @@
 ## Introduction
 This is a repo that contains the code used to do the computational analyses in this paper:
 
-Ba-Alawi, W., Nair, S. K., Li, B., Mammoliti, A., Smirnov, P., Mer, A. S., Penn, L., & Haibe-Kains, B. (2020). *Bimodality of gene expression in cancer patient tumors as interpretable biomarkers for drug sensitivity*. BioRxiv, https://doi.org/10.1101/2020.09.08.288688
+Ba-Alawi, W., Nair, S. K., Li, B., Mammoliti, A., Smirnov, P., Mer, A. S., Penn, L., & Haibe-Kains, B. (2020). **Bimodality of gene expression in cancer patient tumors as interpretable biomarkers for drug sensitivity**. BioRxiv, https://doi.org/10.1101/2020.09.08.288688
 
 The script for the analyses is written in R.
 
