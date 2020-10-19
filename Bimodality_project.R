@@ -7,10 +7,10 @@ library(gsubfn)
 library(wCI)
 
 
-setwd("~/Projects/bimodality_expression/")
+setwd("~/Projects/Bimodality_paper/")
 
-source("getBiModalScore.R")
-source("AzureRun/getPredictions_LOBICO.R")
+source("src/getBiModalScore.R")
+source("src/getPredictions_LOBICO.R")
 
 
 # Flags to set whether to run long functions
@@ -22,7 +22,8 @@ perform_CTRPv2_training_BimodalGenes <- F # flag for retraining models based on 
 ######################################
 ######################################
 # Data for cell lines bimodality
-CCLE <- readRDS("~/Projects/final_psets/CCLE.rds")
+#load("PSets/CCLE_kallisto.RData")
+CCLE <- readRDS("PSets/CCLE.rds")
 genes_mappings <- featureInfo(CCLE,"rnaseq")
 
 
@@ -50,8 +51,8 @@ if(perform_CL_bimodality){
   
   stopCluster(cl)
 }else{
-  BiModalScores_ccleRnaSeq <-readRDS("data_precomputed/BiModalScores_ccleRnaSeq.rda")
-  BiModalScores_ccleRnaSeq_ALL <-readRDS("data_precomputed/BiModalScores_ccleRnaSeq_ALL.rda")
+  BiModalScores_ccleRnaSeq <-readRDS("data/BiModalScores_ccleRnaSeq.rda")
+  BiModalScores_ccleRnaSeq_ALL <-readRDS("data/BiModalScores_ccleRnaSeq_ALL.rda")
 }
 
 protCodingGenes <- genes_mappings[names(BiModalScores_ccleRnaSeq),"gene_type"]
@@ -69,14 +70,14 @@ ccle_RS_th <- quantile(BiModalScores_ccleRnaSeq[protCodingGenes],probs = percent
 # Fig 1 - b
 #####################
 dens=density(BiModalScores_ccleRnaSeq[protCodingGenes])
-pdf("Plots/Fig_1_b_big.pdf")
+pdf("plots/Fig_1_b_big.pdf")
 hist(BiModalScores_ccleRnaSeq[protCodingGenes],main = "Dist. of bimodality score in CCLE",xlab = "BI score",breaks = 50,col="skyblue",border = NA)
 dev.off()
 
 # example of one of the top bimodal genes
 ibx <- which(genes_mappings$Symbol == "RAB25")
 
-pdf("Plots/Fig_1_b_corner.pdf",height = 4,width = 6)
+pdf("plots/Fig_1_b_corner.pdf",height = 4,width = 6)
 dens=density(ccleRnaSeq[,ibx])
 hist(ccleRnaSeq[,ibx],main = featureInfo(CCLE,"rnaseq")[ibx,"Symbol"],xlab = "Expression",breaks = 20,col="skyblue",probability = T,border = NA)
 lines(dens$x,length(ccleRnaSeq[,ibx])*dens$y/600,type="l",col="darkblue")
@@ -91,7 +92,7 @@ dev.off()
 # Fig 1 - c
 #####################
 
-TCGA_bimodal_genes <- readRDS("TCGA_bimodality_scores.rda")
+TCGA_bimodal_genes <- readRDS("data/TCGA_bimodality_scores.rda")
 
 TCGA_threshold <- quantile(TCGA_bimodal_genes[protCodingGenes],probs = 0.8)
 ccle_Threshold <- quantile(BiModalScores_ccleRnaSeq[protCodingGenes],probs = 0.8)
@@ -106,7 +107,7 @@ names(finalSetOfGenes) <- genes_mappings[finalSetOfGenes,"Symbol"]
 myColor <- rev(RColorBrewer::brewer.pal(11, "Spectral"))
 myColor_scale_fill <- scale_fill_gradientn(colours = myColor)
 
-pdf("Plots/Fig_1_c.pdf",width = 11,height = 10)
+pdf("plots/Fig_1_c.pdf",width = 11,height = 10)
 ggplot(df1, aes(TCGA, CCLE)) + stat_binhex(aes(fill=log(..count..)))  + labs(y= "CCLE bimodality score", x = "TCGA bimodality score") +
   xlim(0, 5) + ylim(0, 5) +
   myColor_scale_fill +
@@ -119,7 +120,7 @@ ggplot(df1, aes(TCGA, CCLE)) + stat_binhex(aes(fill=log(..count..)))  + labs(y= 
                    panel.background = element_blank()) 
 dev.off()
 
-
+cor.test(df1$TCGA,df1$CCLE,method = "p")$p.value
 ################################
 ################################
 ################################
@@ -144,7 +145,7 @@ ccleRnaSeq_final_binary <- getBinaryValues(ccleRnaSeq_final,cutoffs_ccle)
 library(GSA) 
 library(piano)
 
-gsc1 <- loadGSC("~/Projects/general_functions/GeneSets_MsigDB_20180823/c2.cp.reactome.v6.2.symbols.gmt")
+gsc1 <- loadGSC("data/c2.cp.reactome.v6.2.symbols.gmt")
 
 
 finalSetOfGenes_tmp <- finalSetOfGenes[!duplicated(names(finalSetOfGenes))]
@@ -162,7 +163,7 @@ gsea_out_final1 <- gsea_out_final1[order(gsea_out_final1$fdr,decreasing = T),]
 # Fig S1 - a
 #####################
 
-pdf("Plots/Fig_S1_a.pdf",width = 11,height = 8)
+pdf("plots/Fig_S1_a.pdf",width = 11,height = 8)
 par(mai=c(1,7,1,1))
 #barplot(-log10(gsea_out_final1$fdr),horiz = T,names.arg = gsub("REACTOME_","",rownames(gsea_out_final1)),las=2,xlab = "-log10(FDR)")
 barplot(-log10(gsea_out_final1$fdr),horiz = T,names.arg =gsub("REACTOME","",gsub("_"," ",rownames(gsea_out_final1))),las=2,xlab = "-log10(FDR)")
@@ -180,7 +181,7 @@ for (i in 1:(dim(ccleRnaSeq_final_binary)[2]-1)) {
   }
 }
 }else{
-  mccCCLE <- readRDS("data_precomputed/mccCCLE.rda")
+  mccCCLE <- readRDS("data/mccCCLE.rda")
 }
 
 print(paste("IQR for similarity between the top bimodal genes (MCC):",sprintf("%0.2f",IQR(mccCCLE,na.rm = T))))
@@ -191,7 +192,7 @@ print(paste("IQR for similarity between the top bimodal genes (MCC):",sprintf("%
 #####################
 dens=density(mccCCLE[!is.na(mccCCLE)])
 # Plot y-values scaled by number of observations against x values
-pdf("Plots/Fig_S1_b.pdf")
+pdf("plots/Fig_S1_b.pdf")
 hist(mccCCLE[!is.na(mccCCLE)],col="skyblue",breaks = 500,main = "Bimodal genes pairwise-correlation",xlab = "MCC",border = NA)
 lines(dens$x,length(mccCCLE[!is.na(mccCCLE)])*dens$y/200,type="l",col="darkblue")
 dev.off()
@@ -201,7 +202,7 @@ dev.off()
 #####################
 # Training on CTRPv2 data set
 
-CTRPv2 <- readRDS("~/Projects/PSets/CTRPv2.rds")
+CTRPv2 <- readRDS("PSets/CTRPv2.rds")
 
 AAC_CTRPv2 <- summarizeSensitivityProfiles(CTRPv2,sensitivity.measure = "aac_recomputed",fill.missing = F)
 
@@ -238,7 +239,7 @@ drugsProcessed <- gsub("%7D","}",drugsProcessed)
 
 names(output_ensemble_CTRPv2_5CV3NS) <- drugsProcessed
 }else{
-  output_ensemble_CTRPv2_5CV3NS <- readRDS("data_precomputed/output_ensemble_CTRPv2_5CV3NS.rda")
+  output_ensemble_CTRPv2_5CV3NS <- readRDS("data/output_ensemble_CTRPv2_5CV3NS.rda")
 }
 
 output_ensemble_CTRPv2_5CV3NS_final <- output_ensemble_CTRPv2_5CV3NS[intersect(names(keptDrugs)[keptDrugs],names(output_ensemble_CTRPv2_5CV3NS))]
@@ -264,7 +265,7 @@ output_ensemble_CTRPv2_5CV3NS_evaluation <- output_ensemble_CTRPv2_5CV3NS_evalua
 output_ensemble_CTRPv2_5CV3NS_evaluation <- cbind(output_ensemble_CTRPv2_5CV3NS_evaluation,"fdr"=p.adjust(output_ensemble_CTRPv2_5CV3NS_evaluation[,"Pvalue"]))
 output_ensemble_CTRPv2_5CV3NS_evaluation[,"fdr"] <- p.adjust(output_ensemble_CTRPv2_5CV3NS_evaluation[,"Pvalue"],method = "bonferroni")
 
-drugClasses <- readRDS("data_precomputed/drugClasses_CTRPv2_GDSC_Nehme.rda")
+drugClasses <- readRDS("data/drugClasses_CTRPv2_GDSC_Nehme.rda")
 output_ensemble_CTRPv2_5CV3NS_evaluation_drugClasses <- as.data.frame(output_ensemble_CTRPv2_5CV3NS_evaluation,stringsAsFactors=F)
 output_ensemble_CTRPv2_5CV3NS_evaluation_drugClasses <- cbind(output_ensemble_CTRPv2_5CV3NS_evaluation_drugClasses
                                                               ,"Class"=drugClasses[rownames(output_ensemble_CTRPv2_5CV3NS_evaluation_drugClasses),"PossibleGDSC1000Class_final"],stringsAsFactors=F)
@@ -288,7 +289,7 @@ for (i in 1:dim(output_ensemble_CTRPv2_5CV3NS_evaluation_drugClasses)[1]) {
 # Fig 2 - a
 #####################
 
-pdf("Plots/Fig_2_a.pdf",width = 12)
+pdf("plots/Fig_2_a.pdf",width = 12)
 data1 <- sort(output_ensemble_CTRPv2_5CV3NS_evaluation[,"mCI"])
 plotdata_tmp <- data.frame("CI"=data1,stringsAsFactors = F)
 plotdata_tmp$drug = rownames(plotdata_tmp)
@@ -298,6 +299,7 @@ ggplot(plotdata_tmp,aes(drug,CI,fill=CI)) +
   geom_bar(stat="identity", position='dodge') +
   scale_fill_gradient(low = "gray",high = "darkblue") +
   coord_cartesian(ylim=c(0.49, 0.8)) +
+  geom_hline(yintercept = 0.6,col="red",lty=2) +
   ylab("CI") + xlab("Drugs") +
   theme_bw() +
   theme(axis.text.x=element_blank(),
@@ -305,7 +307,10 @@ ggplot(plotdata_tmp,aes(drug,CI,fill=CI)) +
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
-        panel.background = element_blank()) +
+        panel.background = element_blank(),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        legend.text = element_text(size = 10)) +
   ggtitle("CTRPv2 - cross validation results [CI]") 
 
 dev.off()
@@ -347,7 +352,7 @@ source("PieDonut_mod.R")
 # Fig 2 - b
 #####################
 
-pdf("Plots/Fig_2_b.pdf",width = 15,height = 15)
+pdf("plots/Fig_2_b.pdf",width = 15,height = 15)
 PieDonut_mod(data = tmp,mapping = aes(pies=Class,donuts=type,label=label),piesLevels = drugClasses_levels,showlabelsDonut = F
              ,donutLabelSize = 5,pieLabelSize = 5.5,addDonutLabel = F,showRatioDonut = T
              ,showPieName = F,showDonutName = F,showRatioThreshold = 0,use.label = T)
@@ -443,7 +448,7 @@ names(rules_symbols_final) <- names(rules_symbols)
 #####################
 
 
-pdf("Plots/SupplementryFile1.pdf",width = 12,height = 18)
+pdf("plots/SupplementryFile1.pdf",width = 12,height = 18)
 
 for (q in seq(1,length(topHits),3)) {
   
@@ -472,7 +477,7 @@ dev.off()
 # Fig 2 - c
 #####################
 
-pdf("Plots/Fig_2_c.pdf",width = 12,height = 18)
+pdf("plots/Fig_2_c.pdf",width = 12,height = 12)
 
 
   par(mfrow=c(2,1))
@@ -482,9 +487,9 @@ pdf("Plots/Fig_2_c.pdf",width = 12,height = 18)
     results <- results[order(results[,2],decreasing = T),]
     results_tmp <- results
     results_tmp[,2] <- results_tmp[,2]-0.2
-    barplot(results_tmp[,2],col = ifelse(results_tmp[,1]==1,"#75d2ff","#f24720"),border = NA,axes=FALSE,names.arg = NA,ylab = "AAC")
-    axis(side=2,at=seq(0,1,0.1)-0.2,labels=(seq(0,1,0.1)))
-    legend("topright",legend = c("Sensitive","Resistant"),fill = c("#75d2ff","#f24720"),bty="n")
+    barplot(results_tmp[,2],col = ifelse(results_tmp[,1]==1,"#75d2ff","#f24720"),border = NA,axes=FALSE,names.arg = NA,ylab = "AAC",cex.lab=1.3)
+    axis(side=2,at=seq(0,1,0.1)-0.2,labels=(seq(0,1,0.1)),cex.axis=1.25)
+    legend("topright",legend = c("Sensitive","Resistant"),fill = c("#75d2ff","#f24720"),bty="n",cex = 1.2)
     title(main = paste(x,"[CTRPv2]\n","CI:",sprintf("%.2f",as.numeric(output_ensemble_CTRPv2_5CV3NS_final[[x]][[1]][,"mCI"])),
                        "\n",paste("[",rules_symbols[[x]],"]",collapse = " | ")))
   })
@@ -494,7 +499,11 @@ dev.off()
 
 # EGFR exxpresion correlation with Erlotinib Rule
 tmp <- output_ensemble_CTRPv2_5CV3NS$Erlotinib[[4]][,c(4,5)]
-tmp <- cbind(tmp,"EGFR"=ccleRnaSeq[rownames(tmp),"ENSG00000146648.15"])
+
+
+EGFR =ccleRnaSeq[rownames(tmp),"ENSG00000146648.15"]
+EGFR_bin = ifelse(EGFR>mean(EGFR),1,0)
+tmp <- cbind(tmp,"EGFR"=EGFR,"EGFR_bin"=EGFR_bin)
 
 a <- cor.test(tmp[,"Vote"],tmp[,"EGFR"],method = "p")
 
@@ -505,13 +514,60 @@ print(paste("EGFR expression correlation with Erlotinib rule => "
             ,sprintf("%0.2E",a$p.value)
             ))
 
+cor.test(tmp[,"Vote"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"Obs"],method = "p")$p.value
+cor.test(tmp[,"EGFR"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"EGFR"],tmp[,"Obs"],method = "p")$p.value
+cor.test(tmp[,"EGFR_bin"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"EGFR_bin"],tmp[,"Obs"],method = "p")$p.value
+cor.test(tmp[,"Vote"],tmp[,"EGFR"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"EGFR"],method = "p")$p.value
+cor.test(tmp[,"Vote"],tmp[,"EGFR_bin"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"EGFR_bin"],method = "p")$p.value
+paired.concordance.index(tmp[,"Vote"],tmp[,"Obs"],delta.obs = 0.2)$cindex
+paired.concordance.index(tmp[,"EGFR"],tmp[,"Obs"],delta.obs = 0.2)$cindex
+paired.concordance.index(tmp[,"EGFR_bin"],tmp[,"Obs"],delta.obs = 0.2)$cindex
+paired.concordance.index(tmp[,"Vote"],tmp[,"EGFR"])$cindex
+paired.concordance.index(tmp[,"Vote"],tmp[,"EGFR_bin"])$cindex
 
+
+# ERBB2 exxpresion correlation with Erlotinib Rule
+tmp <- output_ensemble_CTRPv2_5CV3NS$Lapatinib[[4]][,c(4,5)]
+
+
+ERBB2 =ccleRnaSeq[rownames(tmp),"ENSG00000141736.13"]
+ERBB2_bin = ifelse(ERBB2>mean(ERBB2),1,0)
+tmp <- cbind(tmp,"ERBB2"=ERBB2,"ERBB2_bin"=ERBB2_bin)
+
+a <- cor.test(tmp[,"Vote"],tmp[,"ERBB2"],method = "p")
+
+print(paste("ERBB2 expression correlation with Erlotinib rule => "
+            ,"PCC:"
+            ,sprintf("%0.2f",a$estimate)
+            ,", P-val:"
+            ,sprintf("%0.2E",a$p.value)
+))
+
+cor.test(tmp[,"Vote"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"Obs"],method = "p")$p.value
+cor.test(tmp[,"ERBB2"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"ERBB2"],tmp[,"Obs"],method = "p")$p.value
+cor.test(tmp[,"ERBB2_bin"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"ERBB2_bin"],tmp[,"Obs"],method = "p")$p.value
+cor.test(tmp[,"Vote"],tmp[,"ERBB2"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"ERBB2"],method = "p")$p.value
+cor.test(tmp[,"Vote"],tmp[,"ERBB2_bin"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"ERBB2_bin"],method = "p")$p.value
+
+paired.concordance.index(tmp[,"Vote"],tmp[,"Obs"],delta.obs = 0.2)$cindex
+paired.concordance.index(tmp[,"ERBB2"],tmp[,"Obs"],delta.obs = 0.2)$cindex
+paired.concordance.index(tmp[,"ERBB2_bin"],tmp[,"Obs"],delta.obs = 0.2)$cindex
+paired.concordance.index(tmp[,"Vote"],tmp[,"ERBB2"])$cindex
+paired.concordance.index(tmp[,"Vote"],tmp[,"ERBB2_bin"])$cindex
 
 #######################################
 #######################################
 # validating on gCSI and GDSC
-gCSI <- readRDS("~/Projects/final_psets/gCSI_2018.rds")
-GDSC1000 <- readRDS("~/Projects/final_psets/GDSCv2.rds")
+#gCSI <- readRDS("~/Projects/final_psets/gCSI_2018.rds")
+#GDSC1000 <- readRDS("~/Projects/final_psets/GDSCv2.rds")
+gCSI <- readRDS("PSets/gCSI2.rds")
+GDSC1000 <- readRDS("PSets/GDSC2.rds")
+
+gCSI <- readRDS("~/Projects/OneDrive_1_8-27-2020/gCSI_2018.rds")
+GDSC1000 <- readRDS("~/Projects/OneDrive_1_8-27-2020/GDSCv2.rds")
+
+
+
 
 AUC_gCSI <- summarizeSensitivityProfiles(gCSI,sensitivity.measure = "aac_recomputed",fill.missing = F)
 AUC_GDSC1000 <- summarizeSensitivityProfiles(GDSC1000,sensitivity.measure = "aac_recomputed",fill.missing = F)
@@ -526,11 +582,13 @@ commonDrugsGDSC_gCSI <- Reduce(intersect,x = list(rownames(AUC_gCSI)
 # validate on GCSI
 
 
-gCSIRnaSeq_ALL <- t(exprs(summarizeMolecularProfiles(gCSI,mDataType = "rnaseq",fill.missing = F)))
+gCSIRnaSeq_eSet <- summarizeMolecularProfiles(gCSI,mDataType = "rnaseq",fill.missing = F)
+gCSIRnaSeq_ALL <- t(exprs(gCSIRnaSeq_eSet))
 gCSITissues <- gCSI@cell[rownames(gCSIRnaSeq_ALL),"tissueid",drop=F]
 ibx <- which(gCSITissues$tissueid!="haematopoietic_and_lymphoid_tissue")
 gCSITissues_WithoutHAEMATO <- gCSITissues[ibx,,drop=F]
 gCSIRnaSeq <- gCSIRnaSeq_ALL[rownames(gCSITissues_WithoutHAEMATO),]
+
 
 gcsi <- gCSIRnaSeq[,finalSetOfGenes]
 gcsi_binary <- getBinaryValues(gcsi,cutoffs_ccle[finalSetOfGenes])
@@ -543,6 +601,7 @@ final_drugs_common <- rownames(output_ensemble_CTRPv2_5CV3NS_evaluation[drugs_co
 
 results_final_common_gCSI <- lapply(final_drugs_common, function(x,output,experssion,AUCs_Drugs){
   
+  print(x)
   AUCs_Drug <- AUCs_Drugs[x,]
   AUCs_Drug <- AUCs_Drug[!is.na(AUCs_Drug)]
   
@@ -605,7 +664,7 @@ data <- data.frame("CTRPv2"=output_ensemble_CTRPv2_5CV3NS_evaluation[rownames(re
 # Fig 3 - a
 #####################
 
-pdf("Plots/Fig_3_a.pdf",height = 6,width = 14)
+pdf("plots/Fig_3_a.pdf",height = 6,width = 14)
 dataF <- t(as.matrix(data[,c(1,2)]))
 dataF <- dataF[,names(sort(dataF["gCSI",],decreasing = T))]
 dataF <- dataF - 0.5
@@ -679,11 +738,15 @@ results_final_common_evaluation_gdsc <- lapply(results_final_common_gdsc, functi
   notExpressedCellLines <- rownames(output)[output[,"Vote"]==0]
   
   #integrCindex <- Hmisc::rcorr.cens(S=output[c(notExpressedCellLines,expressedCellLines),2], x = as.numeric(output[c(notExpressedCellLines,expressedCellLines),1]),outx = F )
-  CI <- wCI::paired.concordance.index(output[c(notExpressedCellLines,expressedCellLines),1],output[c(notExpressedCellLines,expressedCellLines),2]
-                                      ,delta.pred = 0,delta.obs = 0,outx = F)
+  CI <- tryCatch(wCI::paired.concordance.index(output[c(notExpressedCellLines,expressedCellLines),1],output[c(notExpressedCellLines,expressedCellLines),2]
+                                      ,delta.pred = 0,delta.obs = 0,outx = F),error=function(e){
+                                        return(list("cindex"=NA,"p.value"=NA))
+                                      })
   
-  mCI <- wCI::paired.concordance.index(output[c(notExpressedCellLines,expressedCellLines),1],output[c(notExpressedCellLines,expressedCellLines),2]
-                                       ,delta.pred = 0,delta.obs = 0.2,outx = F)
+  mCI <- tryCatch(wCI::paired.concordance.index(output[c(notExpressedCellLines,expressedCellLines),1],output[c(notExpressedCellLines,expressedCellLines),2]
+                                       ,delta.pred = 0,delta.obs = 0.2,outx = F),error=function(e){
+                                         return(list("cindex"=NA,"p.value"=NA))
+                                       })
   
   results <- c("CI"=as.numeric(CI["cindex"]),"CI.pval"=as.numeric(CI["p.value"]),"mCI"=as.numeric(mCI["cindex"]),"mCI.pval"=as.numeric(mCI["p.value"]))
   return(results)
@@ -705,7 +768,7 @@ data[is.na(data$GDSCv2) | data$GDSCv2<0.5,"GDSCv2"] = rep(0.5,length(which(is.na
 # Fig 3 - b
 #####################
 
-pdf("Plots/Fig_3_b.pdf",height = 6,width = 14)
+pdf("plots/Fig_3_b.pdf",height = 6,width = 14)
 dataF <- t(as.matrix(data[,c(1,2)]))
 dataF <- dataF[,names(sort(dataF["GDSCv2",],decreasing = T))]
 dataF <- dataF - 0.5
@@ -925,7 +988,7 @@ df_comparison$drug <- rownames(df_comparison)
 # Fig 4 - a
 #####################
 
-pdf("Plots/Fig_4_a.pdf",width = 9,height = 8)
+pdf("plots/Fig_4_a.pdf",width = 9,height = 8)
 ggplot(df_comparison_best_final,aes(x="",y = Freq, fill = Model)) +
   geom_col(width = 1,position = 'stack') +
   geom_text(aes(label = paste(round(Freq / sum(Freq) * 100, 1), "%",sep = ""), x = 1),size=6,
@@ -948,7 +1011,7 @@ dev.off()
 # Fig 4 - b
 #####################
 
-pdf("Plots/Fig_4_b.pdf",width = 8,height = 7)
+pdf("plots/Fig_4_b.pdf",width = 8,height = 7)
 ggplot(df_comparison,mapping = aes(x=Tissues,y = RNAseq,col=Model)) +
   geom_point()  +
   geom_text(data=subset(df_comparison, Tissues > 0.7),aes(Tissues,RNAseq,label=drug),  vjust = "inward", hjust = "inward",nudge_x = -0.005) +
@@ -974,7 +1037,7 @@ dev.off()
 #####################
 # Fig 4 - c
 #####################
-pdf("Plots/Fig_4_c.pdf",width = 8,height = 7)
+pdf("plots/Fig_4_c.pdf",width = 8,height = 7)
 ggplot(df_comparison,mapping = aes(x=Mutation,y = RNAseq,col=Model)) +
   geom_point()  +
   geom_text(data=subset(df_comparison, Mutation > 0.7),aes(Mutation,RNAseq,label=drug),  vjust = "inward", hjust = "inward",nudge_x = -0.005) +
@@ -1000,7 +1063,7 @@ dev.off()
 #####################
 # Fig 4 - d
 #####################
-pdf("Plots/Fig_4_d.pdf",width = 8,height = 7)
+pdf("plots/Fig_4_d.pdf",width = 8,height = 7)
 ggplot(df_comparison,mapping = aes(x=CNV,y = RNAseq,col=Model)) +
   geom_point()  +
   geom_text(data=subset(df_comparison, CNV > 0.75),aes(CNV,RNAseq,label=drug),  vjust = "inward", hjust = "inward",nudge_x = -0.005) +
@@ -1030,7 +1093,7 @@ my_comparisons = list(  c("RNAseq", "Tissues"),c("RNAseq", "Mutation"), c("RNAse
 df_comparison_melt$variable <- factor(df_comparison_melt$variable
                                       ,levels = c("RNAseq","Tissues", "Mutation", "CNV"))
 
-pdf("Plots/Fig_4_b1.pdf",width = 5.5,height = 5)
+pdf("plots/Fig_4_b1.pdf",width = 5.5,height = 5)
 ggplot(df_comparison_melt,aes(variable,value)) +
   geom_boxplot(aes(fill=variable), show.legend = FALSE) +
   xlab("Data type") + ylab("CI") +
@@ -1054,7 +1117,7 @@ tissuesVsRNAseq <- lapply(names(ibx), function(k){
 tissuesVsRNAseq_final <- do.call(rbind,tissuesVsRNAseq)
 
 dens=density(tissuesVsRNAseq_final[,"estimate"])
-pdf("Plots/Fig_4_b2.pdf")
+pdf("plots/Fig_4_b2.pdf")
 hist(tissuesVsRNAseq_final[,"estimate"],breaks = 20,main = "RNAseq Predictions vs Tissue Predictions",xlab = "MCC",xlim = c(-1,1),col = "skyblue",border = NA)
 dev.off()
 
@@ -1185,7 +1248,7 @@ output_ensemble_CTRPv2_5CV3NS_LUNG_evaluation <- cbind(output_ensemble_CTRPv2_5C
 
 common <- intersect(rownames(output_ensemble_CTRPv2_5CV3NS_LUNG_evaluation),rownames(results_final_common_evaluation_ccleLung))
 
-pdf("Plots/PanCancerVsLung.pdf")
+pdf("plots/PanCancerVsLung.pdf")
 plot(x = output_ensemble_CTRPv2_5CV3NS_LUNG_evaluation[common,"mCI"],y = results_final_common_evaluation_ccleLung[common,"mCI"],ylim = c(0.35,0.95),xlim = c(0.35,0.95)
      ,main = "Comparing Lung-specific vs pan-cancer models [CTRPv2]",xlab = "lung-specific models [CI]",ylab = "pan-cancer models [CI]"
      ,pch=16,col=rgb(red = 0.001, green = 0.4, blue = 0.4, alpha = 0.8))
