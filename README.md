@@ -19,6 +19,7 @@ These R packages need to be installed in order to run the analysis script:
 - piano
 - fgsea
 - dplyr
+- RLOBICO
 
 
 ----
@@ -28,6 +29,8 @@ These R packages need to be installed in order to run the analysis script:
 
 <br>
 *Important Note 1:* the user needs to set the working directory inside the script file before running it, i.e. setting the working directory to "Gene_Expression_Bimodality-master"
+
+*Important Note 2:* RLOBICO package is used to create the logical models. This package requirs the installation of the CPLEX solver by IBM. Please follow instructions on the package's github repo for installation (https://github.com/bhklab/RLOBICO)
 <br>
 
 
