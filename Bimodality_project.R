@@ -22,7 +22,7 @@ perform_CTRPv2_training_BimodalGenes <- F # flag for retraining models based on 
 ######################################
 ######################################
 # Data for cell lines bimodality
-#load("PSets/CCLE_kallisto.RData")
+
 CCLE <- readRDS("PSets/CCLE.rds")
 genes_mappings <- featureInfo(CCLE,"rnaseq")
 
@@ -120,7 +120,8 @@ ggplot(df1, aes(TCGA, CCLE)) + stat_binhex(aes(fill=log(..count..)))  + labs(y= 
                    panel.background = element_blank()) 
 dev.off()
 
-cor.test(df1$TCGA,df1$CCLE,method = "p")$p.value
+cor.test(df1$TCGA,df1$CCLE,method = "p")
+
 ################################
 ################################
 ################################
@@ -202,7 +203,7 @@ dev.off()
 #####################
 # Training on CTRPv2 data set
 
-CTRPv2 <- readRDS("PSets/CTRPv2.rds")
+CTRPv2 <- readRDS("PSets/CTRPv2_clean.rds")
 
 AAC_CTRPv2 <- summarizeSensitivityProfiles(CTRPv2,sensitivity.measure = "aac_recomputed",fill.missing = F)
 
@@ -284,6 +285,8 @@ for (i in 1:dim(output_ensemble_CTRPv2_5CV3NS_evaluation_drugClasses)[1]) {
   output_ensemble_CTRPv2_5CV3NS_evaluation_drugClasses[i,"ClassCol"] <- cols_DrugClasses[output_ensemble_CTRPv2_5CV3NS_evaluation_drugClasses[i,"Class"]]
 }
 
+
+sum(output_ensemble_CTRPv2_5CV3NS_evaluation[,"mCI"]>0.6 & output_ensemble_CTRPv2_5CV3NS_evaluation[,"Pvalue"]<0.05)/dim(output_ensemble_CTRPv2_5CV3NS_evaluation)[1]
 
 #####################
 # Fig 2 - a
@@ -497,7 +500,7 @@ pdf("plots/Fig_2_c.pdf",width = 12,height = 12)
 dev.off()
 
 
-# EGFR exxpresion correlation with Erlotinib Rule
+# EGFR expresion correlation with Erlotinib Rule
 tmp <- output_ensemble_CTRPv2_5CV3NS$Erlotinib[[4]][,c(4,5)]
 
 
@@ -514,19 +517,9 @@ print(paste("EGFR expression correlation with Erlotinib rule => "
             ,sprintf("%0.2E",a$p.value)
             ))
 
-cor.test(tmp[,"Vote"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"Obs"],method = "p")$p.value
-cor.test(tmp[,"EGFR"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"EGFR"],tmp[,"Obs"],method = "p")$p.value
-cor.test(tmp[,"EGFR_bin"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"EGFR_bin"],tmp[,"Obs"],method = "p")$p.value
-cor.test(tmp[,"Vote"],tmp[,"EGFR"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"EGFR"],method = "p")$p.value
-cor.test(tmp[,"Vote"],tmp[,"EGFR_bin"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"EGFR_bin"],method = "p")$p.value
-paired.concordance.index(tmp[,"Vote"],tmp[,"Obs"],delta.obs = 0.2)$cindex
-paired.concordance.index(tmp[,"EGFR"],tmp[,"Obs"],delta.obs = 0.2)$cindex
-paired.concordance.index(tmp[,"EGFR_bin"],tmp[,"Obs"],delta.obs = 0.2)$cindex
-paired.concordance.index(tmp[,"Vote"],tmp[,"EGFR"])$cindex
-paired.concordance.index(tmp[,"Vote"],tmp[,"EGFR_bin"])$cindex
 
 
-# ERBB2 exxpresion correlation with Erlotinib Rule
+# ERBB2 expresion correlation with Erlotinib Rule
 tmp <- output_ensemble_CTRPv2_5CV3NS$Lapatinib[[4]][,c(4,5)]
 
 
@@ -543,28 +536,14 @@ print(paste("ERBB2 expression correlation with Erlotinib rule => "
             ,sprintf("%0.2E",a$p.value)
 ))
 
-cor.test(tmp[,"Vote"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"Obs"],method = "p")$p.value
-cor.test(tmp[,"ERBB2"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"ERBB2"],tmp[,"Obs"],method = "p")$p.value
-cor.test(tmp[,"ERBB2_bin"],tmp[,"Obs"],method = "p")$estimate;cor.test(tmp[,"ERBB2_bin"],tmp[,"Obs"],method = "p")$p.value
-cor.test(tmp[,"Vote"],tmp[,"ERBB2"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"ERBB2"],method = "p")$p.value
-cor.test(tmp[,"Vote"],tmp[,"ERBB2_bin"],method = "p")$estimate;cor.test(tmp[,"Vote"],tmp[,"ERBB2_bin"],method = "p")$p.value
-
-paired.concordance.index(tmp[,"Vote"],tmp[,"Obs"],delta.obs = 0.2)$cindex
-paired.concordance.index(tmp[,"ERBB2"],tmp[,"Obs"],delta.obs = 0.2)$cindex
-paired.concordance.index(tmp[,"ERBB2_bin"],tmp[,"Obs"],delta.obs = 0.2)$cindex
-paired.concordance.index(tmp[,"Vote"],tmp[,"ERBB2"])$cindex
-paired.concordance.index(tmp[,"Vote"],tmp[,"ERBB2_bin"])$cindex
 
 #######################################
 #######################################
 # validating on gCSI and GDSC
-#gCSI <- readRDS("~/Projects/final_psets/gCSI_2018.rds")
-#GDSC1000 <- readRDS("~/Projects/final_psets/GDSCv2.rds")
-gCSI <- readRDS("PSets/gCSI2.rds")
-GDSC1000 <- readRDS("PSets/GDSC2.rds")
 
-gCSI <- readRDS("~/Projects/OneDrive_1_8-27-2020/gCSI_2018.rds")
-GDSC1000 <- readRDS("~/Projects/OneDrive_1_8-27-2020/GDSCv2.rds")
+
+gCSI <- readRDS("PSets/gCSI_2018.rds")
+GDSC1000 <- readRDS("PSets/GDSCv2.rds")
 
 
 
@@ -1254,8 +1233,6 @@ plot(x = output_ensemble_CTRPv2_5CV3NS_LUNG_evaluation[common,"mCI"],y = results
      ,pch=16,col=rgb(red = 0.001, green = 0.4, blue = 0.4, alpha = 0.8))
 lines(x = c(0,1), y = c(0,1))
 abline(h = 0.6,v = 0.6,lty=2,col="red")
-#ibx <- which(results_final_common_evaluation_ccleLung[common,"mCI"] > 0.75)
-#text(y = output_ensemble_CTRPv2_5CV3NS_LUNG_evaluation[common[ibx],"mCI"],x = results_final_common_evaluation_ccleLung[common[ibx],"mCI"],labels = common[ibx],pos = 1)
 rect(xleft = 0,0,0.6,0.6,col = "gray",border = NA,density = 30)
 dev.off()
 
