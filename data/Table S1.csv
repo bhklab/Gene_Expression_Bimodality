@@ -1,0 +1,69 @@
+compound	gene	Uniprot ID	ClinicalTrials	OncoKB	COSMIC	Target (DrugBank)	Alteration.type	Association	Models	Other references (Pubmed ID)	MoA	Comments			Abbreviations
+Docetaxel	AR	P10275	NCT03700099,NCT01718353	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID - 20807808	Broad-spectrum	NA			EXPR - Gene expression
+Docetaxel	EGFR	P00533	NCT02959749	NA	NA	NO	MUT, EXPR	RESISTANT	Patient & in vitro	PMID: 23493804, PMID: 24888374, PMID: 21681119, PMID: 23460714	Broad-spectrum	NA			MUT - Mutation
+Docetaxel	IGF1R	P08069	NCT01949519	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 28928839	Broad-spectrum	microarray analysis confirmed by RT-qPCR			PMID - Pubmed ID
+Docetaxel	BRCA2	P51587	NCT03075735	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 28928839	Broad-spectrum	microarray analysis confirmed by RT-qPCR. BRCA2 knockdown abolished the docetaxel resistance in resistant prostrate cancer cells in vitro.			WT - wild type of protein
+Docetaxel	IL6	P05231	NCT01949519	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 21214673, 17000695	Broad-spectrum	NA			AMP - gene amplification 
+Docetaxel	BCL2	P10415	NCT00063934, NCT00169000	NA	NA	NO	EXPR	SENSITIVE	Patient & in vitro	PMID: 31394710	Broad-spectrum	 Cytotoxicity directly correlated with Bcl-2 expression in vitro and inversely correlated with docetaxel sensitivity in vivo.			
+Docetaxel	TP53	P04637	NCT00378404	NA	NA	NO	EXPR (WT)	SENSITIVE	Patient & in vitro	 PMID: 16080190, PMID:22996738, PMID: 28485104, PMID: 28212547	Broad-spectrum	NA			
+Docetaxel	IGF1	P05019	NCT01949519	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 29291019	Broad-spectrum	NA			
+Docetaxel	RPN2	P04844	NA	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 29632637	Broad-spectrum	advanced gastric cancer			
+Docetaxel	ID1	P41134	NA	NA	NA	NO	EXPR	SENSITIVE	in vitro	PMID: 20388787	Broad-spectrum	NA			
+Pictilisib	PIK3CA	P42336	NCT02389842	NA	YES	YES	MUT and AMP	SENSITIVE	in vitro , in vivo , patients	PMID: 28808038	Targeted	Drug synonym - GDC-0941			
+Gemcitabine	TYMS	P04818	NCT01781988	NA	NA	YES	EXPR	RESISTANT	in vitro , in vivo , patients	PMID: 20944490 , PMID: 29187479 	Broad-spectrum				
+Gemcitabine	DCK	P27707	NCT00429858	NA	NA	NO	EXPR	SENSITIVE	in vitro , in vivo , patients	PMID: 24649234, PMID: 22490663 , PMID: 17224927 , PMID: 25224279, PMID: 16734894	Broad-spectrum	DCK is a key enzyme that activates gemcitabine by phosphorylation. Also implicated in radiosensitivity of the drug			
+Gemcitabine	TP53	P04637	NCT00894504, NCT01639885	NA	NA	NO	EXPR(WT)	SENSITIVE	in vitro , in vivo , patients	PMID: 10803919, PMID: 25311384, PMID: 27294865, PMID: 24008735 	Broad-spectrum	Sensitivity induced mainly through p53-mediated apoptosis.			
+Gemcitabine	XIAP	P98170	NCT00557596	NA	NA	NO	EXPR	RESISTANT	in vitro , in vivo , patients	PMID: 17094439, PMID: 16628085, PMID: 23354694	Broad-spectrum				
+Gemcitabine	RRM1	P23921	NCT00215930, NCT00499109, NCT00792701	NA	NA	YES	EXPR	RESISTANT	Patient & in vitro	PMID: 16966686 , PMID: 19543324 	Broad-spectrum				
+Gemcitabine	ENT1	Q99808	NCT02309658, NCT01124786	NA	NA	NO	EXPR	SENSITIVE	Patient & in vitro	PMID: 24301456, PMID: 25024604	Broad-spectrum				
+Gemcitabine	MUC16	Q8WXI7	NCT00183794	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 28196872, PMID: 25691062	Broad-spectrum				
+Gemcitabine	AKT1	Q96B36	NA	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 28061880, PMID: 20944098, PMID: 32123287	Broad-spectrum				
+Gemcitabine	PROM2	Q8N271	NA	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 32123287	Broad-spectrum				
+Gemcitabine	KRAS	P01116	NCT0089450, NCT01308840	NA	NA	NO	MUT	RESISTANT	Patient & in vitro	PMID: 30217561, PMID: 21862683 	Broad-spectrum				
+Gemcitabine	BCL2	Q92934	NCT00176241, NCT00887757	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 24014050	Broad-spectrum				
+Vorinostat	RAD23B	P54727	NCT01175980	NA	NA	NO	EXPR	SENSITIVE	Patient & in vitro	PMID: 27499916, PMID: 20308564 	Targeted	Protein expression is also considered as a biomarker.			
+Vorinostat	STAT3	P40763	NA	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 18483262	Targeted				
+Vorinostat	GLI1	P08151	NA	NA	NA	NO	EXPR	RESISTANT	in vitro	PMID: 26868908 	Targeted				
+Paclitaxel	BCL2	Q92934	NCT00005032	NA	NA	YES	MUT, EXPR	RESISTANT	Patient & in vitro	PMID: 31044156 	Broad-spectrum	T > C variant or increased gene copy numbers are implicated in resistance.			
+Paclitaxel	TUBB3	Q13509	NA	NA	NA	NO	EXPR	RESISTANT	Patient & in vitro	PMID: 15923415,PMID: 17714470, PMID: 22411898 	Broad-spectrum				
+Paclitaxel	PHB	P35232	NA	NA	NA	NO	EXPR	RESISTANT	in vitro & in vivo	PMID: 20133800	Broad-spectrum				
+Paclitaxel	MSI2	Q96DH6	NA	NA	NA	NO	EXPR	RESISTANT	in vitro	PMID: 27600258 	Broad-spectrum				
+Crizotinib	ALK	Q9UM73	NCT00932451	YES	YES	YES	MUT, EXPR	SENSITIVE	Patient, in vitro	PMID: 25624436, PMID: 27354483, PMID: 31388026, PMID: 26791794	Targeted	Mutation leading to rna expression			
+Crizotinib	MET		NCT02435108	YES	YES	YES	AMP,MUT	SENSITIVE	Patient, in vitro	PMID: 31156053,PMID: 26791794	Targeted	Mutation leading to rna expression			
+Crizotinib	ROS1	P08922	NCT01945021	YES	NA	NO	FUSION	SENSITIVE	Patient, in vitro	PMID: 30327756, PMID: 31548824,PMID: 26791794	Targeted				
+Crizotinib	TP53	P04637	NCT03574402	NO	NA	NO	MUT	RESISTANT	Patient, in vitro	PMID: 29997966, PMID: 29760954	Targeted				
+Crizotinib	ERBB2	P04626	NCT01441128	NO	NA	NO	EXPR	RESISTANT	Patient	PMID: 30744539	Targeted				
+Lapatinib	ERBB2	P04626	NCT00650910, NCT00614978	YES	NA	YES	EXPR and MUT	SENSITIVE	Patient, in vitro	PMID: 19047115, PMID: 29799521, PMID: 12214266	Targeted	Excep ERBB2 (K753E) mutation, which is resistant			
+Lapatinib	PIK3CA	P42336	NCT01306045	NO	NA	NO	MUT	RESISTANT	in vitro , in vivo , patients	PMID: 29110152, PMID: 19010894, PMID: 30607159	Targeted				
+Lapatinib	EGFR	P00533	NCT01497626	YES	NA	YES	EXPR and MUT	SENSITIVE	Patient, in vitro	PMID: 19047115, PMID: 29799521, PMID: 12214266	Targeted				
+Lapatinib	MET	P08581	NCT00898573	NO	NA	NO	EXPR	RESISTANT	Patient, in vitro	PMID: 22238368	Targeted				
+Lapatinib	ERBB3	P21860	NCT00939523, NCT00320411, NCT00553358	NO	NA	NO	EXPR	RESISTANT	Patient, in vitro	PMID: 26621843, PMID: 24044505, PMID: 24973425	Targeted				
+Lapatinib	IGF1R	P08069	NCT00320411, NCT00753207	NO	NA	NO	EXPR	RESISTANT	Patient, in vitro	PMID: 30729097, PMID: 24973425					
+Erlotinib	EGFR	P00533	NCT01967095, NCT00577707	YES	YES	YES	MUT	SENSITIVE	Patient, in vitro	PMID : 24388704	Targeted				
+Erlotinib	ERBB2	P04626	NCT00033514, NCT00042809	NO 	NO 	NO 	MUT 	RESISTANT	in vitro , in vivo , patients	PMID: 22956644, PMID: 28870636	Targeted	HER2 overexpression or knockdown confers resistance or sensitivity, respectively, in all studied cell line models. Amplification results in resistance.			
+Erlotinib	ESR2	Q92731	NCT04034589, NCT00100854	NO 	NO 	NO 	EXPR	RESISTANT	in vitro , in vivo , patients	PMID: 29328407	Targeted				
+Erlotinib	KRAS	P01116	NCT01229150, NCT01859026	NO	NA	NO	MUT	RESISTANT	Patient, in vitro	PMID: 30679620, PMID: 15696205	Targeted				
+Erlotinib	PTEN	P60484	NCT00671970	NO 	NA	NO	MUT 	RESISTANT	Patient, in vitro	PMID: 19351834, PMID: 28714370 	Targeted	Loss of PTEN results in resistance.			
+Erlotinib	IGF1R	P08069	NCT00617708	NO 	NO 	NO 	EXPR	RESISTANT	Patient, in vitro	PMID: 28418902	Targeted				
+Erlotinib	NEDD4	P46934	NO 	NO 	NO 	NO 	EXPR	RESISTANT	in vitro & in vivo	PMID: 28714370, PMID: 29455656 	Targeted				
+Erlotinib	PGRMC1	O00264	NO 	NO 	NO 	NO 	EXPR	SENSITIVE	in vitro	PMID: 20538600	Targeted				
+5-Fluorouracil	SMAD4	Q13485	NO	NO	NA	NO	EXPR	SENSITIVE	in vitro , in vivo , patients	PMID: 26647806, PMID: 12237773, PMID: 16144935	Broad-spectrum				
+5-Fluorouracil	CTPS2	Q9NRF8	NO	NO	NA	NO	EXPR	SENSITIVE	Patient, in vitro & in vivo	PMID: 21378502	Broad-spectrum				
+5-Fluorouracil	ALCAM	Q13740	NO	NO	NA	NO	EXPR	RESISTANT	Patient, in vitro	PMID: 24708484, PMID: 29845263	Broad-spectrum				
+5-Fluorouracil	CDKN1A	P38936	NO	NO	NA	NO	EXPR	RESISTANT	Patient, in vitro	PMID: 24708484, PMID: 30304835, PMID: 16709241	Broad-spectrum				
+5-Fluorouracil	HSPA5	P11021	NO	NO	NA	NO	EXPR	Cell-line dependent	Patient, in vitro	PMID: 23456958, PMID: 28870916 , PMID: 28551635, PMID: 27634156 	Broad-spectrum	Two different trends reported in the papers. 1st paper mentioned sensitivity whereas the rest resistance.			
+5-Fluorouracil	CBLB	Q13191	NO	NO	NA	NO	EXPR	SENSITIVE	in vitro	PMID: 24351824	Broad-spectrum				
+Dasatinib	ABL1	P00519	NCT00070499	YES	YES	YES	MUT	SENSITIVE	Patient, in vitro	PMID: 19608684, 20447687, PMID: 26297264	Targeted				
+Dasatinib	SRC	P12931	NCT01306942	NO	NA	YES	EXPR	SENSITIVE	in vitro , in vivo , patients	PMID: 27231123 , PMID: 27222538	Targeted	c-SRC gatekeeper mutation (T341M) renders resistance			
+Dasatinib	IDH2	P48735	NCT02428855	NO	NA	NO	MUT	SENSITIVE	in vitro , in vivo , patients	PMID: 27231123	Targeted				
+Dasatinib	IDH1	O75874	NCT02428855	NO	NA	NO	MUT	SENSITIVE	in vitro , in vivo , patients	PMID: 27231123	Targeted				
+Dasatinib	DDR2	Q16832	NCT01514864	NO	NA	NO	MUT	SENSITIVE	in vitro , in vivo , patients	PMID: 26206333,PMID: 22328973 	Targeted				
+Dasatinib	KRAS	P01116	NCT00787267	NO	NA	NO	EXPR and MUT	SENSITIVE	in vitro , in vivo , patients	PMID: 20303350, PMID: 22740998, PMID: 28280091 	Targeted				
+Dasatinib	KIT	P10721	NCT00859937	NO	NA	YES	MUT	SENSITIVE	Patient, in vitro	PMID: 19671763	Targeted	dasatinib is a potent inhibitor of  KIT activation loop mutants and induces apoptosis in mast cell and leukemic cell lines expressing these mutations (potency against KIT D816Y >> D816F > D816V)			
+Dasatinib	PDGFRA	P16234	NCT00464620	NO	NA	NO	MUT	SENSITIVE	in vitro	PMID: 18794084 	Targeted				
+Dasatinib	BRAF	"P15056	"	NCT01514864	NO	NA	NO	MUT	SENSITIVE	Patient, in vitro	PMID: 26623721	Targeted				
+Dasatinib	CSF3R	Q99062	NA	NO	NA	NO	MUT	SENSITIVE	in vitro	PMID: 23656643	Targeted				
+Dasatinib	CBL	P22681	NA	NO	NA	NO	MUT	SENSITIVE	in vitro	PMID: 22246246, PMID: 23696637 	Targeted				
+Dabrafenib	BRAF	"P15056	"	NCT01153763 , NCT01266967, NCT01584648	YES	YES	YES	MUT	SENSITIVE	Patient, in vitro	PMID: 23317446, PMID: 26037941	Targeted				
+Dabrafenib	NRAS	P01111	NCT01726738	NO	NA	NO	MUT	RESISTANT	Patient, in vitro	PMID: 22389471, PMID: 30154648	Targeted				
+Dabrafenib	KRAS	P01116	NCT01582997	NO	NA	NO	MUT	SENSITIVE	in vitro	PMID: 29112787	Targeted				
