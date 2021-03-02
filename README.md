@@ -33,5 +33,10 @@ These R packages need to be installed in order to run the analysis script:
 <br>
 *Important Note 2:* RLOBICO package is used to create the logical models. This package requirs the installation of the CPLEX solver by IBM. Please follow instructions on the package's github repo for installation (https://github.com/bhklab/RLOBICO)
 <br>
+<br>
+*Important Note 3:* Data needed to run these analyses can be downloaded from 
+https://figshare.com/projects/Bimodality_of_genes_expression_in_cancer_patients_as_interpretable_biomarkers_for_drug_sensitivity/98693
+Please download these PSets to folder
+<br>
 
 
