@@ -10,5 +10,5 @@ To run the training step:
   * numOfSolutions: the number od solutions produced by mRMRe for feature selection.
   * outputPath: output directory
   * dictionary: a named array of drugs. Used to give coded names to drugs that have special chars or spaces
-  * data: data needed for different annotations
+  * data: data needed for different annotations (for CTRPv2, please download the following data "dataNeededForLOBICO_CTRPv2_TCGA_0.75.RData" from: https://figshare.com/projects/Bimodality_of_genes_expression_in_cancer_patients_as_interpretable_biomarkers_for_drug_sensitivity/98693 )
 
