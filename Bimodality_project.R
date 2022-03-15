@@ -37,11 +37,23 @@ ccleTissues_WithoutHAEMATO <- ccleTissues[ibx,,drop=F]
 ccleRnaSeq <- ccleRnaSeq_ALL[rownames(ccleTissues_WithoutHAEMATO),]
 CCLE_tissues <- data.frame(table(ccleTissues[rownames(ccleRnaSeq),]),stringsAsFactors = F)
 
+library(reshape2)
+ccleTissues_WithoutHAEMATO$sampleid = rownames(ccleTissues_WithoutHAEMATO)
+ccleTissues_WithoutHAEMATO_hotEncoding <- dcast(data = ccleTissues_WithoutHAEMATO, sampleid ~ tissueid)
+rownames(ccleTissues_WithoutHAEMATO_hotEncoding) <- ccleTissues_WithoutHAEMATO_hotEncoding$sampleid
+ccleTissues_WithoutHAEMATO_hotEncoding <- ccleTissues_WithoutHAEMATO_hotEncoding[,-1]
+ccleTissues_WithoutHAEMATO_hotEncoding[!is.na(ccleTissues_WithoutHAEMATO_hotEncoding)] = 1
+ccleTissues_WithoutHAEMATO_hotEncoding[is.na(ccleTissues_WithoutHAEMATO_hotEncoding)] = 0
+ccleTissues_WithoutHAEMATO_hotEncoding <- sapply( ccleTissues_WithoutHAEMATO_hotEncoding, as.numeric )
+apply(ccleTissues_WithoutHAEMATO_hotEncoding,2,sum)
+rownames(ccleTissues_WithoutHAEMATO_hotEncoding) <- rownames(ccleTissues_WithoutHAEMATO)
 
-
+tissues_stats <- as.data.frame(sort(table(ccleTissues_WithoutHAEMATO$tissueid),decreasing = T),row.names = NULL)
+colnames(tissues_stats) <- c("Tissue","Freq")
+write.table(tissues_stats,"tissues_stats.csv",sep = ",",quote = F,row.names = F)
 
 if(perform_CL_bimodality){
-
+  
   library(parallel)
   cl <- makeCluster(3)
   
@@ -65,6 +77,11 @@ protCodingGenes <- names(protCodingGenes)
 percentile <- 0.80
 ccle_RS_th <- quantile(BiModalScores_ccleRnaSeq[protCodingGenes],probs = percentile)
 
+BiModalScores_ccleRnaSeq.df <- data.frame("GeneID"=names(BiModalScores_ccleRnaSeq),
+                                          "BI_score"=BiModalScores_ccleRnaSeq,
+                                          "Symbol"=genes_mappings[names(BiModalScores_ccleRnaSeq),"Symbol"])
+
+write.table(BiModalScores_ccleRnaSeq.df,"BiModalScores_CCLE.csv",quote = F,sep = ",",row.names = F)
 
 #####################
 # Fig 1 - b
@@ -79,7 +96,10 @@ ibx <- which(genes_mappings$Symbol == "RAB25")
 
 pdf("plots/Fig_1_b_corner.pdf",height = 4,width = 6)
 dens=density(ccleRnaSeq[,ibx])
-hist(ccleRnaSeq[,ibx],main = featureInfo(CCLE,"rnaseq")[ibx,"Symbol"],xlab = "Expression",breaks = 20,col="skyblue",probability = T,border = NA)
+hist(ccleRnaSeq[,ibx],main = paste(featureInfo(CCLE,"rnaseq")[ibx,"Symbol"],"\n[BI score: "
+                                   ,sprintf("%.2f",BiModalScores_ccleRnaSeq[rownames(genes_mappings)[ibx]])
+                                   ,"]",sep = "")
+     ,xlab = "Expression",breaks = 20,col="#939bd2",probability = T,border = NA)
 lines(dens$x,length(ccleRnaSeq[,ibx])*dens$y/600,type="l",col="darkblue")
 dev.off()
 
@@ -93,6 +113,12 @@ dev.off()
 #####################
 
 TCGA_bimodal_genes <- readRDS("data/TCGA_bimodality_scores.rda")
+TCGA_bimodal_genes.df <- data.frame("GeneID"=names(TCGA_bimodal_genes),
+                                    "BI_score"=TCGA_bimodal_genes,
+                                    "Symbol"=genes_mappings[names(TCGA_bimodal_genes),"Symbol"])
+
+write.table(TCGA_bimodal_genes.df,"BiModalScores_TCGA.csv",quote = F,sep = ",",row.names = F)
+
 
 TCGA_threshold <- quantile(TCGA_bimodal_genes[protCodingGenes],probs = 0.8)
 ccle_Threshold <- quantile(BiModalScores_ccleRnaSeq[protCodingGenes],probs = 0.8)
@@ -102,6 +128,12 @@ df1 <- data.frame(data.frame("TCGA"=TCGA_bimodal_genes[protCodingGenes],"CCLE"=B
 
 finalSetOfGenes <- names(ibx)
 names(finalSetOfGenes) <- genes_mappings[finalSetOfGenes,"Symbol"]
+
+finalSetOfGenes.df <- data.frame("GeneID"=finalSetOfGenes,
+                                 "Symbol"=names(finalSetOfGenes))
+
+write.table(finalSetOfGenes.df,"BimdalGenes.csv",quote = F,sep = ",",row.names = F)
+
 
 
 myColor <- rev(RColorBrewer::brewer.pal(11, "Spectral"))
@@ -117,7 +149,8 @@ ggplot(df1, aes(TCGA, CCLE)) + stat_binhex(aes(fill=log(..count..)))  + labs(y= 
                    panel.grid.major = element_blank(),
                    panel.grid.minor = element_blank(),
                    panel.border = element_blank(),
-                   panel.background = element_blank()) 
+                   panel.background = element_blank()
+                   ,text = element_text(size = 20)) 
 dev.off()
 
 cor.test(df1$TCGA,df1$CCLE,method = "p")
@@ -161,10 +194,10 @@ gsea_out_final1 <- gsea_out_final[gsea_out_final$fdr<0.05,]
 gsea_out_final1 <- gsea_out_final1[order(gsea_out_final1$fdr,decreasing = T),]
 
 #####################
-# Fig S1 - a
+# Fig S1 - b
 #####################
 
-pdf("plots/Fig_S1_a.pdf",width = 11,height = 8)
+pdf("plots/Fig_S1_b.pdf",width = 11,height = 8)
 par(mai=c(1,7,1,1))
 #barplot(-log10(gsea_out_final1$fdr),horiz = T,names.arg = gsub("REACTOME_","",rownames(gsea_out_final1)),las=2,xlab = "-log10(FDR)")
 barplot(-log10(gsea_out_final1$fdr),horiz = T,names.arg =gsub("REACTOME","",gsub("_"," ",rownames(gsea_out_final1))),las=2,xlab = "-log10(FDR)")
@@ -173,14 +206,14 @@ dev.off()
 # performing the Matthew correlation coefficient to measure the similarity between the top bimodal genes
 
 if(perform_MCC_bimodalGenesSimilarity){
-mccCCLE <- matrix(nrow = dim(ccleRnaSeq_final_binary)[2],ncol = dim(ccleRnaSeq_final_binary)[2])
-for (i in 1:(dim(ccleRnaSeq_final_binary)[2]-1)) {
-  for (j in (i+1):dim(ccleRnaSeq_final_binary)[2]) {
-    tmpEst <- mccr(as.factor(ccleRnaSeq_final_binary[,i]),as.factor(ccleRnaSeq_final_binary[,j]))
-    mccCCLE[i,j] <- tmpEst
-    mccCCLE[j,i] <- tmpEst
+  mccCCLE <- matrix(nrow = dim(ccleRnaSeq_final_binary)[2],ncol = dim(ccleRnaSeq_final_binary)[2])
+  for (i in 1:(dim(ccleRnaSeq_final_binary)[2]-1)) {
+    for (j in (i+1):dim(ccleRnaSeq_final_binary)[2]) {
+      tmpEst <- mccr(as.factor(ccleRnaSeq_final_binary[,i]),as.factor(ccleRnaSeq_final_binary[,j]))
+      mccCCLE[i,j] <- tmpEst
+      mccCCLE[j,i] <- tmpEst
+    }
   }
-}
 }else{
   mccCCLE <- readRDS("data/mccCCLE.rda")
 }
@@ -188,17 +221,68 @@ for (i in 1:(dim(ccleRnaSeq_final_binary)[2]-1)) {
 print(paste("IQR for similarity between the top bimodal genes (MCC):",sprintf("%0.2f",IQR(mccCCLE,na.rm = T))))
 
 
+
+
+
 #####################
-# Fig S1 - b
+# Fig S1 - c
 #####################
 dens=density(mccCCLE[!is.na(mccCCLE)])
 # Plot y-values scaled by number of observations against x values
-pdf("plots/Fig_S1_b.pdf")
+pdf("plots/Fig_S1_c.pdf")
 hist(mccCCLE[!is.na(mccCCLE)],col="skyblue",breaks = 500,main = "Bimodal genes pairwise-correlation",xlab = "MCC",border = NA)
 lines(dens$x,length(mccCCLE[!is.na(mccCCLE)])*dens$y/200,type="l",col="darkblue")
 dev.off()
 
 
+
+
+#####################
+# Fig S6
+#####################
+
+library(caret)
+tissue_gene_MCC <- do.call(rbind,lapply(colnames(ccleRnaSeq_final_binary),function(gene){
+  tmp <- as.data.frame(do.call(rbind,lapply(colnames(ccleTissues_WithoutHAEMATO_hotEncoding), function(tissue){
+    tmp_CM <- confusionMatrix(factor(ccleRnaSeq_final_binary[,gene],levels = c(1,0)),factor(ccleTissues_WithoutHAEMATO_hotEncoding[rownames(ccleRnaSeq_final_binary),tissue],levels = c(1,0)))
+    return(c("MCC"=mccr(ccleRnaSeq_final_binary[,gene],ccleTissues_WithoutHAEMATO_hotEncoding[rownames(ccleRnaSeq_final_binary),tissue]),tmp_CM$byClass))
+  })))
+  
+  tmp$tissue <- colnames(ccleTissues_WithoutHAEMATO_hotEncoding)
+  tmp$gene <- gene
+  return(tmp)
+}))
+
+metric <- "Precision"
+metric <- "F1"
+metric <- "MCC"
+dens=density(tissue_gene_MCC[,metric][!is.na(tissue_gene_MCC[,metric])])
+# Plot y-values scaled by number of observations against x values
+#pdf("plots/Fig_S1_b.pdf")
+#hist(tissue_gene_MCC[,metric][!is.na(tissue_gene_MCC[,metric])],col="skyblue",breaks = 1000,main = "Bimodal genes pairwise-correlation",xlab = metric,border = NA)
+#lines(dens$x,length(tissue_gene_MCC[,metric][!is.na(tissue_gene_MCC[,metric])])*dens$y/950,type="l",col="darkblue")
+#IQR(tissue_gene_MCC[,metric],na.rm = T)
+#range(tissue_gene_MCC[,metric],na.rm = T)
+#median(tissue_gene_MCC[,metric],na.rm = T)
+#dev.off()
+
+data <- reshape2::melt(tissue_gene_MCC[,c("F1","Precision")])
+colnames(data) <- c("Metric","value")
+
+pdf("plots/Fig_S6.pdf",width = 5,height = 4)
+ggplot(data,aes(Metric,value,fill=Metric))+
+  geom_boxplot() +
+  theme_bw() +
+  theme(#axis.text.x=element_blank(),
+    #axis.ticks.x=element_blank(),axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    # panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.text = element_text(size = 10))
+dev.off()
 #####################
 #####################
 # Training on CTRPv2 data set
@@ -219,30 +303,83 @@ keptDrugs <- apply(AAC_CTRPv2, 1, function(x){
 
 if(perform_CTRPv2_training_BimodalGenes){
   
-
-featuresType <- "output_mCI_CCLE_TCGA_75_F"
-
-listOfdrugsFiles <- dir(paste("AzureRun/",featuresType,"/",sep = ""))
-
-output_ensemble_CTRPv2_5CV3NS <- lapply(listOfdrugsFiles, function(x){
-  print(x)
-  output <- readRDS(paste("AzureRun/",featuresType,"/",x,sep = ""))
-  return(output)
-})
-
-drugsProcessed <- unlist(lapply(strsplit(listOfdrugsFiles,"_CTRPv2_clean"),"[[",1))
-drugsProcessed <- gsub("%2C",",",drugsProcessed)
-drugsProcessed <- gsub("%5B","[",drugsProcessed)
-drugsProcessed <- gsub("%5D","]",drugsProcessed)
-drugsProcessed <- gsub("%20"," ",drugsProcessed)
-drugsProcessed <- gsub("%7B","{",drugsProcessed)
-drugsProcessed <- gsub("%7D","}",drugsProcessed)
-
-names(output_ensemble_CTRPv2_5CV3NS) <- drugsProcessed
+  
+  featuresType <- "output_mCI_CCLE_TCGA_75_F"
+  
+  listOfdrugsFiles <- dir(paste("AzureRun/",featuresType,"/",sep = ""))
+  
+  output_ensemble_CTRPv2_5CV3NS <- lapply(listOfdrugsFiles, function(x){
+    print(x)
+    output <- readRDS(paste("AzureRun/",featuresType,"/",x,sep = ""))
+    return(output)
+  })
+  
+  drugsProcessed <- unlist(lapply(strsplit(listOfdrugsFiles,"_CTRPv2_clean"),"[[",1))
+  drugsProcessed <- gsub("%2C",",",drugsProcessed)
+  drugsProcessed <- gsub("%5B","[",drugsProcessed)
+  drugsProcessed <- gsub("%5D","]",drugsProcessed)
+  drugsProcessed <- gsub("%20"," ",drugsProcessed)
+  drugsProcessed <- gsub("%7B","{",drugsProcessed)
+  drugsProcessed <- gsub("%7D","}",drugsProcessed)
+  
+  names(output_ensemble_CTRPv2_5CV3NS) <- drugsProcessed
 }else{
   output_ensemble_CTRPv2_5CV3NS <- readRDS("data/output_ensemble_CTRPv2_5CV3NS.rda")
 }
 
+############
+# compare 1 vs many models
+keptDrugs_names <- names(keptDrugs)[keptDrugs]
+results_CV_3S <- do.call(rbind,lapply(names(output_ensemble_CTRPv2_5CV3NS), function(drug){
+  x <- output_ensemble_CTRPv2_5CV3NS[[drug]]
+  print(drug)
+  if(!is.null(names(x)[1]) || is.null(x[[3]]))
+    return(NULL)
+  
+  S1 <- x[[3]][[1]][[1]][[1]]
+  S2 <- x[[3]][[2]][[1]][[1]]
+  S3 <- x[[3]][[3]][[1]][[1]]
+  
+  ibx1 <- which(as.numeric(S1[-1,"mCI"]) == max(as.numeric(S1[-1,"mCI"])))
+  ibx1 <- ibx1[1]
+  ibx2 <- which(as.numeric(S2[-1,"mCI"]) == max(as.numeric(S2[-1,"mCI"])))
+  ibx2 <- ibx2[1]
+  ibx3 <- which(as.numeric(S3[-1,"mCI"]) == max(as.numeric(S3[-1,"mCI"])))
+  ibx3 <- ibx3[1]
+  
+  tmp <- data.frame("mCI_single"=as.numeric(c(S1[1,"mCI"],S2[1,"mCI"],S3[1,"mCI"]))
+                    ,"mCI_multi"=as.numeric(c(S1[ibx1+1,"mCI"],S2[ibx2+1,"mCI"],S3[ibx3+1,"mCI"]))
+                    ,"solution" = c("S1","S2","S3")
+                    ,"drug"=drug
+                    ,stringsAsFactors = F)
+  
+  
+  return(tmp)
+}))
+
+results_CV_3S_final <- results_CV_3S[results_CV_3S$drug %in% keptDrugs_names,]
+
+pdf("plots/Fig_S4.pdf")
+ggplot(results_CV_3S_final,aes(mCI_single,mCI_multi)) +
+  geom_point() +
+  xlab("Univariate models [CI]") +
+  ylab("Best multi-variate models [CI]") +
+  xlim(c(0.4,0.9)) + ylim(0.4,0.9)  +
+  geom_abline(intercept = 0,linetype = "dashed", color="red") +
+  theme_bw()+theme(axis.line = element_line(colour = "black"),
+                   panel.grid.major = element_blank(),
+                   panel.grid.minor = element_blank(),
+                   panel.border = element_blank(),
+                   panel.background = element_blank()) 
+dev.off()
+boxplot(list("single"=results_CV_3S_final$mCI_single,"multi"=results_CV_3S_final$mCI_multi))
+class(results_CV_3S_final$mCI) <- "numeric"
+
+sum(results_CV_3S_final$mCI_multi > results_CV_3S_final$mCI_single)/length(results_CV_3S_final$mCI_multi)
+
+#############
+
+############
 output_ensemble_CTRPv2_5CV3NS_final <- output_ensemble_CTRPv2_5CV3NS[intersect(names(keptDrugs)[keptDrugs],names(output_ensemble_CTRPv2_5CV3NS))]
 mciTh = 0.6
 
@@ -287,6 +424,16 @@ for (i in 1:dim(output_ensemble_CTRPv2_5CV3NS_evaluation_drugClasses)[1]) {
 
 
 sum(output_ensemble_CTRPv2_5CV3NS_evaluation[,"mCI"]>0.6 & output_ensemble_CTRPv2_5CV3NS_evaluation[,"Pvalue"]<0.05)/dim(output_ensemble_CTRPv2_5CV3NS_evaluation)[1]
+
+
+#####################
+transact_drugs <- read.csv("drugToMap.csv",header = T,stringsAsFactors = F,check.names = F)
+transact_drugs <- transact_drugs[grep("/",transact_drugs$BHKLab,invert = T),]
+transact_drugs <- transact_drugs[!is.na(transact_drugs$BHKLab),]
+transact_drugs <- transact_drugs[transact_drugs$Hartwig != "NULL",]
+ibx <- match(transact_drugs$BHKLab,rownames(output_ensemble_CTRPv2_5CV3NS_evaluation))
+drugs_transact <- rownames(output_ensemble_CTRPv2_5CV3NS_evaluation)[ibx]
+
 
 #####################
 # Fig 2 - a
@@ -356,10 +503,36 @@ source("PieDonut_mod.R")
 #####################
 
 pdf("plots/Fig_2_b.pdf",width = 15,height = 15)
-PieDonut_mod(data = tmp,mapping = aes(pies=Class,donuts=type,label=label),piesLevels = drugClasses_levels,showlabelsDonut = F
-             ,donutLabelSize = 5,pieLabelSize = 5.5,addDonutLabel = F,showRatioDonut = T
-             ,showPieName = F,showDonutName = F,showRatioThreshold = 0,use.label = T)
+tmps <- PieDonut_mod(data = tmp,mapping = aes(pies=Class,donuts=type,label=label),piesLevels = drugClasses_levels,showlabelsDonut = F
+                     ,donutLabelSize = 5.5,pieLabelSize = 6.5,addDonutLabel = F,showRatioDonut = T
+                     ,showPieName = F,showDonutName = F,showRatioThreshold = 0,use.label = T)
 dev.off()
+
+kinase_and_sginalling_terms <- c("RTK signaling","TOR signaling","PI3K signaling","ABL signaling","ERK MAPK signaling")
+kinase_and_sginalling <- tmp[tmp$Class %in% kinase_and_sginalling_terms,]
+others <- tmp[!(tmp$Class %in% kinase_and_sginalling_terms),]
+
+tmps <- tmps[[2]]
+tmps <- tmps[,c("type","Class","Freq","group","ratio1","ratio")]
+#tmps$type <- ifelse(tmps$type==1,"Good models","Bad models")
+library(scales)
+tmps$ratio1 <- label_percent()(tmps$ratio1)
+tmps$Class <- as.character(tmps$Class)
+classes <- unique(tmps$Class)
+
+classes_info <- do.call(rbind,lapply(classes, function(class){
+  ibx <- which(tmps$Class == class)
+  return(c("Class"=class,"NumberOfDrugs"=tmps$group[ibx[1]]
+           ,"PercentageOfClassOutOfAllClasses"=label_percent()(sum(tmps$ratio1[ibx]))
+           ,"NumberOfGoodModels"=tmps$Freq[ibx[2]]
+           ,"PrecentageOfGoodModels"=tmps$ratio[ibx[2]]
+           ,"NumberOfBadModels"=tmps$Freq[ibx[1]]
+           ,"PrecentageOfBadModels"=tmps$ratio[ibx[1]]
+  ))
+}))
+
+write.table(classes_info,"Drugs_classes_statistics.csv",quote = F,sep = ","
+            ,row.names = F)
 
 
 ###################################
@@ -483,19 +656,19 @@ dev.off()
 pdf("plots/Fig_2_c.pdf",width = 12,height = 12)
 
 
-  par(mfrow=c(2,1))
-  lapply(topHits[c(1,7)], function(x){
-    print(x)
-    results <- results_final_common[[x]]
-    results <- results[order(results[,2],decreasing = T),]
-    results_tmp <- results
-    results_tmp[,2] <- results_tmp[,2]-0.2
-    barplot(results_tmp[,2],col = ifelse(results_tmp[,1]==1,"#75d2ff","#f24720"),border = NA,axes=FALSE,names.arg = NA,ylab = "AAC",cex.lab=1.3)
-    axis(side=2,at=seq(0,1,0.1)-0.2,labels=(seq(0,1,0.1)),cex.axis=1.25)
-    legend("topright",legend = c("Sensitive","Resistant"),fill = c("#75d2ff","#f24720"),bty="n",cex = 1.2)
-    title(main = paste(x,"[CTRPv2]\n","CI:",sprintf("%.2f",as.numeric(output_ensemble_CTRPv2_5CV3NS_final[[x]][[1]][,"mCI"])),
-                       "\n",paste("[",rules_symbols[[x]],"]",collapse = " | ")))
-  })
+par(mfrow=c(2,1))
+lapply(topHits[c(1,7)], function(x){
+  print(x)
+  results <- results_final_common[[x]]
+  results <- results[order(results[,2],decreasing = T),]
+  results_tmp <- results
+  results_tmp[,2] <- results_tmp[,2]-0.2
+  barplot(results_tmp[,2],col = ifelse(results_tmp[,1]==1,"#75d2ff","#f24720"),border = NA,axes=FALSE,names.arg = NA,ylab = "AAC",cex.lab=1.3)
+  axis(side=2,at=seq(0,1,0.1)-0.2,labels=(seq(0,1,0.1)),cex.axis=1.25)
+  legend("topright",legend = c("Sensitive","Resistant"),fill = c("#75d2ff","#f24720"),bty="n",cex = 1.2)
+  title(main = paste(x,"[CTRPv2]\n","CI:",sprintf("%.2f",as.numeric(output_ensemble_CTRPv2_5CV3NS_final[[x]][[1]][,"mCI"])),
+                     "\n",paste("[",rules_symbols[[x]],"]",collapse = " | ")))
+})
 
 dev.off()
 
@@ -515,7 +688,7 @@ print(paste("EGFR expression correlation with Erlotinib rule => "
             ,sprintf("%0.2f",a$estimate)
             ,", P-val:"
             ,sprintf("%0.2E",a$p.value)
-            ))
+))
 
 
 
@@ -556,6 +729,56 @@ commonDrugsGDSC_gCSI <- Reduce(intersect,x = list(rownames(AUC_gCSI)
                                                   ,rownames(output_ensemble_CTRPv2_5CV3NS_evaluation)[output_ensemble_CTRPv2_5CV3NS_evaluation[,"mCI"]>=mciTh]))
 
 
+
+gCSIvsCTRP <- intersect(rownames(AUC_gCSI),rownames(AAC_CTRPv2))
+
+source("~/Desktop/Projects/bimodality_expression/AzureRun/paired.concordance.index.R")
+
+gCSIvsCTRP_CIs <- lapply(gCSIvsCTRP, function(drug,AAC1,AAC2){
+  AAC1 <- AAC1[drug,]
+  AAC1 <- AAC1[!is.na(AAC1)]
+  AAC2 <- AAC2[drug,]
+  AAC2 <- AAC2[!is.na(AAC2)]
+  common_tmp <- intersect(names(AAC1),names(AAC2))
+  if(length(common_tmp)<20){
+    return(NA)
+  }
+  ci <- paired.concordance.index(AAC1[common_tmp],AAC2[common_tmp]
+                                 ,delta.pred = 0.2,delta.obs = 0.2,CPP = F)$cindex
+  if(is.na(ci))
+    ci <- 0.5
+  
+  return(ci)
+  
+},AAC1=AUC_gCSI,AAC2=AAC_CTRPv2)
+
+gCSIvsCTRP_CIs <- unlist(gCSIvsCTRP_CIs)
+
+GDSCvsCTRP <- intersect(rownames(AUC_GDSC1000),rownames(AAC_CTRPv2[keptDrugs,]))
+
+Hmisc::rcorr.cens(1:100, sample(1:1000,100), outx=FALSE)["C Index"]
+
+GDSCvsCTRP_CIs_tmp <- lapply(GDSCvsCTRP, function(drug,AAC1,AAC2){
+  AAC1 <- AAC1[drug,]
+  AAC1 <- AAC1[!is.na(AAC1)]
+  AAC2 <- AAC2[drug,]
+  AAC2 <- AAC2[!is.na(AAC2)]
+  common_tmp <- intersect(names(AAC1),names(AAC2))
+  if(length(common_tmp)<20){
+    return(NA)
+  }
+  ci <- paired.concordance.index(AAC1[common_tmp],AAC2[common_tmp]
+                                 ,delta.pred = 0,delta.obs = 0,CPP = T,p_method = "Asymptotic",conf_int_method = "Asymptotic")$cindex
+  #  ci <- Hmisc::rcorr.cens(AAC1[common_tmp],AAC2[common_tmp], outx=FALSE)["C Index"]
+  if(is.na(ci))
+    ci <- 0.5
+  
+  return(ci)
+  
+},AAC1=AUC_GDSC1000,AAC2=AAC_CTRPv2)
+
+GDSCvsCTRP_CIs_tmp <- unlist(GDSCvsCTRP_CIs_tmp)
+GDSCvsCTRP_CIs <- unlist(GDSCvsCTRP_CIs)
 
 #######################################
 # validate on GCSI
@@ -643,7 +866,7 @@ data <- data.frame("CTRPv2"=output_ensemble_CTRPv2_5CV3NS_evaluation[rownames(re
 # Fig 3 - a
 #####################
 
-pdf("plots/Fig_3_a.pdf",height = 6,width = 14)
+pdf("plots/Fig_5_a.pdf",height = 6,width = 14)
 dataF <- t(as.matrix(data[,c(1,2)]))
 dataF <- dataF[,names(sort(dataF["gCSI",],decreasing = T))]
 dataF <- dataF - 0.5
@@ -718,14 +941,14 @@ results_final_common_evaluation_gdsc <- lapply(results_final_common_gdsc, functi
   
   #integrCindex <- Hmisc::rcorr.cens(S=output[c(notExpressedCellLines,expressedCellLines),2], x = as.numeric(output[c(notExpressedCellLines,expressedCellLines),1]),outx = F )
   CI <- tryCatch(wCI::paired.concordance.index(output[c(notExpressedCellLines,expressedCellLines),1],output[c(notExpressedCellLines,expressedCellLines),2]
-                                      ,delta.pred = 0,delta.obs = 0,outx = F),error=function(e){
-                                        return(list("cindex"=NA,"p.value"=NA))
-                                      })
+                                               ,delta.pred = 0,delta.obs = 0,outx = F),error=function(e){
+                                                 return(list("cindex"=NA,"p.value"=NA))
+                                               })
   
   mCI <- tryCatch(wCI::paired.concordance.index(output[c(notExpressedCellLines,expressedCellLines),1],output[c(notExpressedCellLines,expressedCellLines),2]
-                                       ,delta.pred = 0,delta.obs = 0.2,outx = F),error=function(e){
-                                         return(list("cindex"=NA,"p.value"=NA))
-                                       })
+                                                ,delta.pred = 0,delta.obs = 0.2,outx = F),error=function(e){
+                                                  return(list("cindex"=NA,"p.value"=NA))
+                                                })
   
   results <- c("CI"=as.numeric(CI["cindex"]),"CI.pval"=as.numeric(CI["p.value"]),"mCI"=as.numeric(mCI["cindex"]),"mCI.pval"=as.numeric(mCI["p.value"]))
   return(results)
@@ -747,7 +970,7 @@ data[is.na(data$GDSCv2) | data$GDSCv2<0.5,"GDSCv2"] = rep(0.5,length(which(is.na
 # Fig 3 - b
 #####################
 
-pdf("plots/Fig_3_b.pdf",height = 6,width = 14)
+pdf("plots/Fig_5_b.pdf",height = 6,width = 14)
 dataF <- t(as.matrix(data[,c(1,2)]))
 dataF <- dataF[,names(sort(dataF["GDSCv2",],decreasing = T))]
 dataF <- dataF - 0.5
@@ -1227,7 +1450,7 @@ output_ensemble_CTRPv2_5CV3NS_LUNG_evaluation <- cbind(output_ensemble_CTRPv2_5C
 
 common <- intersect(rownames(output_ensemble_CTRPv2_5CV3NS_LUNG_evaluation),rownames(results_final_common_evaluation_ccleLung))
 
-pdf("plots/PanCancerVsLung.pdf")
+pdf("plots/Fig_3.pdf")
 plot(x = output_ensemble_CTRPv2_5CV3NS_LUNG_evaluation[common,"mCI"],y = results_final_common_evaluation_ccleLung[common,"mCI"],ylim = c(0.35,0.95),xlim = c(0.35,0.95)
      ,main = "Comparing Lung-specific vs pan-cancer models [CTRPv2]",xlab = "lung-specific models [CI]",ylab = "pan-cancer models [CI]"
      ,pch=16,col=rgb(red = 0.001, green = 0.4, blue = 0.4, alpha = 0.8))
@@ -1235,5 +1458,313 @@ lines(x = c(0,1), y = c(0,1))
 abline(h = 0.6,v = 0.6,lty=2,col="red")
 rect(xleft = 0,0,0.6,0.6,col = "gray",border = NA,density = 30)
 dev.off()
+
+
+
+runtime_erlotinib <- data.frame("features"=c("10","20","30"),"time"=c(13.6,94.1,395.8),stringsAsFactors = F)
+
+library(ggplot2)
+
+pdf("plots/Fig_S9.pdf")
+ggplot(runtime_erlotinib,aes(features,time,group = 1)) +
+  geom_bar(stat="identity") + 
+  geom_point() +
+  geom_line() + 
+  xlab("Number of features") +
+  ylab("Training time (mins)") + theme_classic() +
+  ylim(0,420) +
+  geom_text(aes(label=time), vjust=-0.5,col="red") +
+  theme(text = element_text(size = 16))
+dev.off()
+
+
+#####################
+# Fig S1 - a
+#####################
+
+
+# bimodal cutoffs
+#cutoffs_ccle
+ibx <- match(names(cutoffs_ccle),colnames(ccleRnaSeq))
+ccleRnaSeq_removeBimodal <- ccleRnaSeq[,-ibx]
+cutoffs_ccle_average <- apply(ccleRnaSeq_removeBimodal, 2, function(x){
+  return(mean(x,na.rm=T))
+})
+
+cutoffs_ccle_average_bimodalGenes <- apply(ccleRnaSeq[,names(cutoffs_ccle)], 2, function(x){
+  return(mean(x,na.rm=T))
+})
+
+
+ccle_variance <- apply(ccleRnaSeq,2, var)
+idx <- names(ccle_variance)[ccle_variance<1]
+
+common_samples_gCSI <- intersect(rownames(ccleRnaSeq),rownames(gCSIRnaSeq))
+
+
+average_gCSI <- lapply(names(cutoffs_ccle_average), function(gene){
+  ccle_binary <- ifelse(ccleRnaSeq[common_samples_gCSI,gene]>cutoffs_ccle_average[gene],1,0)
+  gCSI_binary <- ifelse(gCSIRnaSeq[common_samples_gCSI,gene]>cutoffs_ccle_average[gene],1,0)
+  return(cbind(ccle_binary,gCSI_binary))
+})
+names(average_gCSI) <- names(cutoffs_ccle_average)
+
+bimodal_gCSI <- lapply(names(cutoffs_ccle), function(gene){
+  ccle_binary <- ifelse(ccleRnaSeq[common_samples_gCSI,gene]>cutoffs_ccle[gene],1,0)
+  gCSI_binary <- ifelse(gCSIRnaSeq[common_samples_gCSI,gene]>cutoffs_ccle[gene],1,0)
+  return(cbind(ccle_binary,gCSI_binary))
+})
+names(bimodal_gCSI) <- names(cutoffs_ccle)
+
+
+
+library(parallel)
+library(caret)
+
+#quantiles <- c(100,90,80,70)
+quantiles <- c(100)
+#quantiles <- c(75)
+
+average_gCSI_stats <- lapply(names(average_gCSI), function(gene){
+  x <- average_gCSI[[gene]]
+  stats <- do.call(rbind,lapply(1:length(quantiles), function(i){
+    th1 <- quantiles[i]/100
+    th2 <- (100-quantiles[i])/100
+    ids <-  common_samples_gCSI[which(ccleRnaSeq[common_samples_gCSI,gene] < quantile(ccleRnaSeq[common_samples_gCSI,gene],probs = th1)
+                                      & ccleRnaSeq[common_samples_gCSI,gene] > quantile(ccleRnaSeq[common_samples_gCSI,gene],probs = th2))]
+    # ids <- sample(rownames(x),100)
+    A <- confusionMatrix(reference = factor(x[ids,"ccle_binary"],levels = c(1,0)), data = factor(x[ids,"gCSI_binary"],levels = c(1,0)))
+    return(c(A$byClass,A$overall[1:2]))
+  }))
+  stats <- as.data.frame(stats)
+  #  stats[is.na(stats)] = 0
+  stats$quantile = quantiles/100
+  stats$gene = gene
+  return(stats)
+})
+
+average_gCSI_stats <- do.call(rbind,average_gCSI_stats)
+
+
+bimodal_gCSI_stats <- lapply(names(bimodal_gCSI), function(gene){
+  x <- bimodal_gCSI[[gene]]
+  stats <- do.call(rbind,lapply(1:length(quantiles), function(i){
+    th1 <- quantiles[i]/100
+    th2 <- (100-quantiles[i])/100
+    ids <-  common_samples_gCSI[which(ccleRnaSeq[common_samples_gCSI,gene] < quantile(ccleRnaSeq[common_samples_gCSI,gene],probs = th1)
+                                      & ccleRnaSeq[common_samples_gCSI,gene] > quantile(ccleRnaSeq[common_samples_gCSI,gene],probs = th2))]
+    # ids <- sample(rownames(x),100)
+    A <- confusionMatrix(reference = factor(x[ids,"ccle_binary"],levels = c(1,0)), data = factor(x[ids,"gCSI_binary"],levels = c(1,0)))
+    return(c(A$byClass,A$overall[1:2]))
+  }))
+  stats <- as.data.frame(stats)
+  #stats[is.na(stats)] = 0
+  stats$quantile = quantiles/100
+  stats$gene = gene
+  return(stats)
+})
+
+bimodal_gCSI_stats <- do.call(rbind,bimodal_gCSI_stats)
+
+data_bimodal <- bimodal_gCSI_stats#summarySE(bimodal_gCSI_stats,measurevar = "F1",groupvars = c("quantile"),na.rm = T)
+data_bimodal$feature <- "bimodal"
+data_average <- average_gCSI_stats#summarySE(average_gCSI_stats,measurevar = "F1",groupvars = c("quantile"),na.rm = T)
+data_average$feature <- "average"
+
+data <- rbind(data_average,data_bimodal)#,data_bimodal_average)
+pd <- position_dodge(0.05)
+data$quantile <- factor(data$quantile)
+data$feature <- factor(data$feature,levels = c("average", "bimodal"))
+
+data_final <- data[data$quantile==1,c("F1","Precision","feature")]
+data_final <- melt(data_final,measure.vars = c("F1","Precision"))
+colnames(data_final) <- c("Method","Metric","value")
+my_comparisons <- list( c("average", "bimodal"))
+library(ggpubr)
+pdf("plots/Fig_S1_a.pdf",width = 6,height = 4)
+ggplot(data_final, aes(x=Method, y=value, fill=Method)) + 
+  geom_boxplot() +
+  stat_compare_means(comparisons = my_comparisons, label.y = c(1, 1.1), label = "p.signif") +
+  # stat_compare_means(label.y = 1.1) + ylim(c(0,1.2)) +
+  facet_wrap(.~Metric,scales = "free_x",ncol = 4) + theme_bw() + 
+  theme(
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.text = element_text(size = 10),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    # panel.border = element_blank(),
+    panel.background = element_blank()
+    
+  )
+
+dev.off()
+
+
+###########################################
+# HARTWIG validation
+###########################################
+
+
+
+drugs <- read.csv("Data/drugToMap.csv",stringsAsFactors = F)
+
+ibx <- grep("/",drugs$BHKLab,invert = T)
+
+drugs_Hartwig <- drugs[ibx,]
+drugs_Hartwig <- drugs_Hartwig[!is.na(drugs_Hartwig$BHKLab),]
+drugs_Hartwig = drugs_Hartwig[drugs_Hartwig$Hartwig != "NULL",]
+
+rownames(drugs_Hartwig) <- drugs_Hartwig$Hartwig
+
+common_drugs_Hartwig <- intersect(drugs_Hartwig$BHKLab,rownames(output_ensemble_CTRPv2_5CV3NS_evaluation))
+ibx <- match(common_drugs_Hartwig,drugs_Hartwig$BHKLab)
+
+common_drugs_Hartwig_final <- data.frame("BHKLAB"=common_drugs_Hartwig,"Hartwig"=drugs_Hartwig[ibx,"Hartwig"],"CI"=output_ensemble_CTRPv2_5CV3NS_evaluation[common_drugs_Hartwig,"mCI"],stringsAsFactors = F)
+
+
+
+HartwigData <- readRDS("Data/Hartwig_SE.rds")
+
+gene_exprssion_hartwig <- assay(HartwigData)
+
+gene_exprssion_hartwig[finalSetOfGenes,]
+phenoData_hartwig <- colData(HartwigData)
+
+phenoData_hartwig.df <- as.data.frame(phenoData_hartwig)
+
+finalSetOfGenes_general <- unlist(lapply(strsplit(finalSetOfGenes,split = ".",fixed = T),"[[",1))
+names(finalSetOfGenes_general) <- finalSetOfGenes
+hartwig_genes_general <- unlist(lapply(strsplit(rownames(gene_exprssion_hartwig),split = ".",fixed = T),"[[",1))
+names(hartwig_genes_general) <- rownames(gene_exprssion_hartwig)
+
+ibx <- match(finalSetOfGenes_general,hartwig_genes_general)
+hartwig_genes_general_final <- hartwig_genes_general[ibx[!is.na(ibx)]]
+finalSetOfGenes_general_hartwig <- finalSetOfGenes_general[!is.na(ibx)]
+gene_exprssion_hartwig_final <- gene_exprssion_hartwig[names(hartwig_genes_general_final),]
+rownames(gene_exprssion_hartwig_final) <- names(finalSetOfGenes_general_hartwig)
+
+
+gene_exprssion_hartwig_final_bin <- getBinaryValues(t(gene_exprssion_hartwig_final),cutoffs_ccle[rownames(gene_exprssion_hartwig_final)])
+
+
+results_hartwig <- lapply(rownames(common_drugs_Hartwig_final), function(x){
+  
+  #x <- "Pazopanib"
+  
+  final_results <- do.call(cbind,lapply(1:length(output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]]), function(y){
+    SolMat <- output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]][[y]][[2]]
+    K <- as.numeric(output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]][[y]][[3]])
+    M <- as.numeric(output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]][[y]][[4]])
+    
+    results <- getPredictions_LOBICO_outer(SolMat[,intersect(colnames(gene_exprssion_hartwig_final_bin),colnames(SolMat)),drop=F],cbind("drug_AUC"=phenoData_hartwig.df[,"firstResponse"], gene_exprssion_hartwig_final_bin[,intersect(colnames(gene_exprssion_hartwig_final_bin),colnames(SolMat))]),K,M)
+    results_final <- as.numeric(results[,"R"]) 
+    names(results_final) <- rownames(results)
+    return(results_final)
+  }))
+  
+  final_results <- as.data.frame(final_results)
+  final_results$predictions <- apply(final_results[,1:3],1,function(y){ 
+    round(mean(y))
+    #as.numeric(any(x))
+  })
+  final_results$response <- phenoData_hartwig.df[rownames(final_results),"firstResponse"]
+  
+  positive <- c("CR","PR")#,"Non-CR/Non-PD")
+  negative <- c("PD","SD")
+  #exclude <- c("NULL","ND","Non-CR/Non-PD")
+  final_results$response_final <- ifelse(final_results$response %in% positive,1,ifelse(final_results$response %in% negative,0,NA))
+  
+  A <- caret::confusionMatrix(as.factor(final_results$predictions),reference=as.factor(final_results$response_final))
+  return(A)
+})
+
+data_validation
+results_hartwig <- do.call(rbind,lapply(results_hartwig,"[[",4))
+
+data_validation <- cbind(common_drugs_Hartwig_final,results_hartwig[rownames(common_drugs_Hartwig_final),])
+data_validation <- data_validation[order(data_validation$CI,decreasing = T),]
+
+data_validation_final <- data_validation[data_validation$CI>0.55,c("BHKLAB","F1","Precision"),]
+
+data <- melt(data_validation_final)
+colnames(data) <- c("Drug","Metric","Value")
+
+pdf("plots/Fig_7.pdf",height = 3)
+ggplot(data,aes(x=Drug,y=Value,fill=Metric)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  theme_bw() +
+  theme(#axis.text.x=element_blank(),
+    #axis.ticks.x=element_blank(),axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    # panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.text = element_text(size = 10))
+dev.off()
+results_hartwig_stats <- do.call(rbind,lapply(names(table(final_results$response)), function(x){
+  table(final_results[final_results$response == x,"predictions"])
+}))
+rownames(results_hartwig_stats) <- names(table(final_results$response))
+
+
+
+
+hartwig_rules <- lapply(rownames(common_drugs_Hartwig_final), function(x){
+  
+  #x <- "Pazopanib"
+  rules <- output_ensemble_CTRPv2_5CV3NS_final[[x]][[2]]
+})
+
+rules <- lapply(rownames(common_drugs_Hartwig_final),function(drug){
+  
+  
+  rule <- unique(unlist(output_ensemble_CTRPv2_5CV3NS[[drug]][[2]]))
+  #    rule <- unique(unlist(lapply(rule, function(y){
+  #      y <- gsub("[&~|]","",y)
+  #      r <- unlist(strsplit(y,split = " "))
+  #      r <- r[r!=""]
+  #      r_symbols <- genes_mappings[r,"Symbol"]
+  #    })))
+  
+  return(rule)
+})
+names(rules) <- rownames(common_drugs_Hartwig_final)
+
+
+
+rules_symbols <- lapply(rules, function(r){
+  rules_symbols_tmp <- c()
+  for (rule in r) {
+    genes <- strapplyc(rule, "ENSG[0-9]+\\.[0-9]+")[[1]]
+    
+    rules_symbols_tmp <- c(rules_symbols_tmp,lapply(genes, function(s){
+      rule <<- gsub(s,names(finalSetOfGenes)[match(s,finalSetOfGenes)],rule)
+    })[[length(genes)]]
+    )
+    
+  }
+  rules_symbols_tmp <- gsub("~","\U00AC",rules_symbols_tmp)
+  return(rules_symbols_tmp)
+})
+
+rules_mapping <- unique(unlist(rules))
+rules_mapping <- gsub("[&~|]","",rules_mapping)
+rules_mapping <- unlist(strsplit(rules_mapping,split = " "))
+rules_mapping <- rules_mapping[rules_mapping!=""]
+rules_mapping <- unique(rules_mapping)
+rules_mapping_symbols <- genes_mappings[rules_mapping,"Symbol"]
+
+rules_symbols_final <- unlist(lapply(1:length(rules_symbols),function(x){
+  paste("[",rules_symbols[[x]],"]",collapse = " | ")
+}))
+
+names(rules_symbols_final) <- names(rules_symbols)
+
 
 
