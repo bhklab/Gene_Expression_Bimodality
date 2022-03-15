@@ -1766,5 +1766,79 @@ rules_symbols_final <- unlist(lapply(1:length(rules_symbols),function(x){
 
 names(rules_symbols_final) <- names(rules_symbols)
 
+#####################################
+# PDX validation
+####################################
+library("wCI")
+library("Xeva")
+
+
+pdxe <- readRDS("Data/PDXE.rds")
+
+drugs_pdxe <- c("erlotinib")
+names(drugs_pdxe) <- c("Erlotinib")
+
+PDXE_results <- lapply(1:length(drugs_pdxe), function(drug_idx){
+  
+  
+  data <- summarizeData(object = pdxe,drug = drugs_pdxe[drug_idx],mDataType = "RNASeq")
+  
+  rnaseqPDXE <- t(exprs(data))
+  rnaseqPDXE_ENS <- rnaseqPDXE
+  colnames(rnaseqPDXE_ENS) <- rownames(genes_mappings)[match(colnames(rnaseqPDXE),genes_mappings[,"Symbol"])]
+  
+  rnaseqPDXE_ENS <- rnaseqPDXE_ENS[,!is.na(colnames(rnaseqPDXE_ENS))]
+  ibx <- intersect(names(cutoffs_ccle),colnames(rnaseqPDXE_ENS))
+  #rnaseqPDXE_ENS_bin <- getBinaryValues(rnaseqPDXE_ENS[,ibx],cutoffs_ccle[ibx])
+  rnaseqPDXE_ENS_bin <- getBinaryValues(rnaseqPDXE_ENS[,ibx],apply(rnaseqPDXE_ENS[,ibx], 2, mean))
+  
+  x <- names(drugs_pdxe)[drug_idx]
+  
+  final_results <- lapply(1:length(output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]]), function(y){
+    print(y)
+    SolMat <- output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]][[y]][[2]]
+    K <- as.numeric(output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]][[y]][[3]])
+    M <- as.numeric(output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]][[y]][[4]])
+    
+    results <- getPredictions_LOBICO_outer(SolMat[,intersect(colnames(rnaseqPDXE_ENS_bin),colnames(SolMat)),drop=F],cbind("drug_AUC"=pData(data)[rownames(rnaseqPDXE_ENS_bin),"abc"], rnaseqPDXE_ENS_bin[,intersect(colnames(rnaseqPDXE_ENS_bin),colnames(SolMat))]),K,M)
+  })
+  
+  final_results <- do.call(cbind,final_results)
+  
+  final_results <- cbind(final_results[,seq(1,length(output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]])*2,2)],final_results[,2])
+  
+  finalPredictions <- apply(final_results[,1:length(output_ensemble_CTRPv2_5CV3NS_final[[x]][[3]]),drop=F], 1, function(x){
+    round(mean(x))
+  })
+  
+  final_results_summary <- cbind("Vote"=finalPredictions,"Obs"=final_results[,dim(final_results)[2]])
+  
+  output <- final_results_summary
+  
+  expressedCellLines <- rownames(output)[output[,"Vote"]==1]
+  notExpressedCellLines <- rownames(output)[output[,"Vote"]==0]
+  
+  metric <- "angle"
+  output[,"Obs"] <- pData(data)[rownames(output),metric]
+  output <- output[!is.na(output[,"Obs"]),]
+  CI <- paired.concordance.index(output[,"Obs"],output[,1]
+                                 ,delta.pred = 0,delta.obs = 0,outx = F,CPP = F,p_method = "Asymptotic",conf_int_method = "Asymptotic")
+  
+  results <- c("CI"=as.numeric(CI["cindex"]),"CI.pval"=as.numeric(CI["p.value"]))
+  
+  data <- data[,rownames(output)]
+  data$prediction <- ifelse(output[colnames(data),"Vote"]==1,"Predicted Sensitive","Predicted Resistant")
+  df <- pData(data)
+  df$angle = log(df$angle + 1 - min(df$angle,na.rm = T))
+  pdf("plots/Fig_6.pdf")
+  waterfall(df, x="patient.id", y=metric, type="prediction",type.color =  rev(c("#75d2ff","#f24720"))
+            ,title = paste(drugs_pdxe[drug_idx],"\nCI: ",sprintf("%0.02f",results["CI"]),", P-value: ",sprintf("%0.2E",results["CI.pval"]),sep = "")
+            ,yname = "log(angle+1-min(angle))")
+  dev.off()
+  #plotPDX(pdxe, patient.id="X-1289", drug=drugs_pdxe[drug_idx],control.name = "untreated",vol.normal = T)
+  
+})
+
+
 
 

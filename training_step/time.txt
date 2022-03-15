@@ -1,0 +1,70 @@
+Loading required package: lattice
+Loading required package: ggplot2
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: 'BiocGenerics'
+
+The following objects are masked from 'package:parallel':
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from 'package:stats':
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from 'package:base':
+
+    Filter, Find, Map, Position, Reduce, anyDuplicated, append,
+    as.data.frame, basename, cbind, colMeans, colSums, colnames,
+    dirname, do.call, duplicated, eval, evalq, get, grep, grepl,
+    intersect, is.unsorted, lapply, lengths, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, rank, rbind,
+    rowMeans, rowSums, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which, which.max, which.min
+
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+Loading required package: survival
+
+Attaching package: 'survival'
+
+The following object is masked from 'package:caret':
+
+    cluster
+
+Loading required package: igraph
+
+Attaching package: 'igraph'
+
+The following objects are masked from 'package:BiocGenerics':
+
+    normalize, path, union
+
+The following objects are masked from 'package:stats':
+
+    decompose, spectrum
+
+The following object is masked from 'package:base':
+
+    union
+
+
+Attaching package: 'mRMRe'
+
+The following objects are masked from 'package:Biobase':
+
+    featureData, featureNames, sampleNames
+
+
+real	12m22.622s
+user	13m36.859s
+sys	0m16.976s
