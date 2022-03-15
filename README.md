@@ -20,6 +20,7 @@ These R packages need to be installed in order to run the analysis script:
 - fgsea
 - dplyr
 - RLOBICO
+- wCI
 
 
 ----
